@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 # Copyright (C) 2013-2018 Steven Myint
+# Copyright (C) 2019-2000 Dmitrii
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -22,7 +23,9 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-"""Modifies strings to all use the same quote where possible."""
+"""Unify strings to all use the same quote.
+Unify all prefixex to lowercase.
+Remove u"" prefixes."""
 
 from __future__ import print_function, unicode_literals
 
@@ -35,7 +38,7 @@ import sys
 import tokenize
 import untokenize  # type: ignore
 
-__version__ = "0.5"
+__version__ = "0.6"
 
 
 try:
@@ -91,9 +94,9 @@ def lowercase_string_prefix(leaf, args):
         orig_prefix = match.group(1)
         new_prefix = orig_prefix
         new_prefix = new_prefix.replace("F", "f")
-        new_prefix = new_prefix.replace("B", "b")
         new_prefix = new_prefix.replace("U", "u")
         new_prefix = new_prefix.replace("R", "r")
+        new_prefix = new_prefix.replace("B", "b")
         leaf = f"{new_prefix}{match.group(2)}"
     return leaf
 
@@ -272,7 +275,7 @@ def format_file(filename, args, standard_out):
     return False
 
 
-def _main(argv, standard_out, standard_error):
+def _main(args, standard_out, standard_error):
     """Run quotes autopep8_quotesing on files.
 
     Returns `1` if any quoting changes are still needed, otherwise
@@ -280,34 +283,100 @@ def _main(argv, standard_out, standard_error):
 
     """
     import argparse
-    parser = argparse.ArgumentParser(description=__doc__, prog="autopep8_quotes",
-                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    import configparser
+    conf_parser = argparse.ArgumentParser(add_help=False)
+    conf_parser.add_argument("-f", "--conf_file",
+                        help="Specify config file", metavar="FILE")
+    conf_parser.add_argument("-a", "--autodetect_conf",
+                        action="store_true", default=True,
+                        help="Try to detect config file: *.ini, *.cfg")
+
+    argv, remaining_argv = conf_parser.parse_known_args()
+
+    defaults = {}
+    defaults["show_args"] = False
+    defaults["check-only"] = False
+    defaults["diff"] = False
+    defaults["in-place"] = False
+    defaults["recursive"] = False
+    defaults["normalize_string_quotes"] = True
+    defaults["inline_quotes"] = '"'
+    defaults["multiline_quotes"] = '"""'
+    defaults["lowercase_string_prefix"] = True
+    defaults["remove_string_u_prefix"] = True
+
+    cfg_files = []
+    if argv.autodetect_conf:
+        for f in os.listdir():
+            if f.endswith('.ini') or f.endswith('.cfg'):
+                cfg_files.append(f)
+    cfg_files = sorted(cfg_files)
+    if argv.conf_file:
+        cfg_files.append(argv.conf_file)
+   
+    for f in cfg_files:
+        try:
+            config = configparser.SafeConfigParser()
+            config.read([f])
+            for sec in ["pep8", "flake8", "autopep8", "autopep8_quotes"]:
+                try:
+                    _dict = dict(config.items(sec))
+                    _dict = {key.replace("-", "_"):value for (key,value) in _dict.items()}
+                    defaults.update(_dict)
+                except:
+                    pass
+        except:
+            pass
+
+    # Parse rest of arguments
+    # Don't suppress add_help here so it will handle -h
+    parser = argparse.ArgumentParser(
+        # Inherit options from config_parser
+        parents=[conf_parser],
+        description=__doc__,
+        prog="autopep8_quotes",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        add_help=True)
+    parser.set_defaults(**defaults)
+
     parser.add_argument("-i", "--in-place", action="store_true",
-                        help="make changes to files.")
+                        help="Make changes to files. "
+                        "Could be combined with --diff")
     parser.add_argument("-d", "--diff", action="store_true",
-                        help="print changes without make changes.")
+                        help="Print changes without make changes. "
+                        "Could be combined with --in-place")
     parser.add_argument("-c", "--check-only", action="store_true",
-                        help="exit with a status code of 1 if any changes are"
-                             " still needed")
+                        help="Exit with a status code of 1 if any changes are still needed")
     parser.add_argument("-r", "--recursive", action="store_true",
-                        help="drill down directories recursively")
+                        help="Drill down directories recursively")
     parser.add_argument("--normalize_string_quotes", action="store_true",
                         help="Normalize all quotes to standart "
-                             "by options --multiline_quotes and --inline_quotes.")
-    parser.add_argument("--multiline_quotes", help="preferred multiline_quotes",
-                        choices=["'''", '"""'], default='"""')
-    parser.add_argument("--inline_quotes", help="preferred inline_quotes",
-                        choices=["'", '"'], default='"')
+                             "by options --multiline_quotes and --inline_quotes")
+    parser.add_argument("--inline_quotes", 
+                        help="Preferred inline_quotes. "
+                        "Works only when --normalize_string_quotes is True",
+                        choices=["'", '"'])
+    parser.add_argument("--multiline_quotes",
+                        help="Preferred multiline_quotes. "
+                        "Works only when --normalize_string_quotes is True",
+                        choices=["'''", '"""'])
     parser.add_argument("--lowercase_string_prefix", action="store_true",
-                        help='Make FURB prefixes lowercase: B"sometext" to b"sometext".')
+                        help='Make FURB prefixes lowercase: B"sometext" to b"sometext"')
     parser.add_argument("--remove_string_u_prefix", action="store_true",
                         help='Removes any u prefix from the string: u"sometext" to "sometext"')
     parser.add_argument("--version", action="version",
-                        version="%(prog)s " + __version__)
+                        version="%(prog)s " + __version__,
+                        help="Show program's version number and exit")
+    parser.add_argument("--show_args", action="store_true",
+                        help="Show readed args for script and exit")
     parser.add_argument("files", nargs="+",
-                        help="files to format")
+                        help="Files to format")
 
-    args = parser.parse_args(argv[1:])
+    args = parser.parse_args(remaining_argv)
+
+    if args.show_args:
+        print(args)
+        sys.exit(0)
 
     filenames = list(set(args.files))
     changes_needed = False
