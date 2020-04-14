@@ -76,12 +76,14 @@ optional arguments:
 ## Config load
 
 Options could be set by several ways (with this order if one option exist several times):
+
     1. Load all config files founded by sorted(os.listdir()) when --autodetect_conf is enabled
         Find all *.ini or *.cfg files and read them by ConfigParser
     2. Load --conf_file file
     3. Options from command-line
 
 In config files options could be stored in several sections (with this order if one option exist several times):
+
     1. pep8
     2. flake8
     3. autopep8
@@ -89,7 +91,7 @@ In config files options could be stored in several sections (with this order if 
 
 ## Example
 
-After running::
+After running:
 
     $ autopep8_quotes --in-place example.py
 
