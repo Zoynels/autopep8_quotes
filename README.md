@@ -110,11 +110,7 @@ gets formatted into this
 
 ## Limitations
 
-1. Not all strings could be transformed in right way:
-```python
-# Can't change string
-e_single_double_1 = """ Some \' text. Some \" text. Some \'\'\' text. Some \"\"\" text."""
-```
+1. Not all strings could be transformed in right way. If you find such, please send it to me.
 2. String checked with ast.literal_eval() which has limitations. Known issues:
 2.1. f-string couldn't be checked perfect, so check without prefix at all.
 3. String with prefix r"" didn't replace escaped quotes.

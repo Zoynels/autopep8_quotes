@@ -188,4 +188,39 @@ e_single_double_2 = """ Some \' text. Some \" text. Some \'\'\'\'\'\' text. Some
 # It should be transformed into 2 string.
 e_single_double_3 = """ Some ' text. Some " text. Some '''''' text. Some """ + '''"""""" text.'''
 
-e_single_double_4 = f"Using \"Quotes within quotes\" is a pain."
+e_single_double_4_0 = """ Some \' text. Some \" text. Some \'\'\'\'\'\' text. Some text"""
+e_single_double_4_1 = """ Some \' text. Some \" text. Some \'\'\'\'\'\' text. Some text\""""
+e_single_double_4_2 = """ Some \' text. Some \" text. Some \'\'\'\'\'\' text. Some text\"\""""
+e_single_double_4_3 = """ Some \' text. Some \" text. Some \'\'\'\'\'\' text. Some text\"\"\""""
+e_single_double_4_4 = """ Some \' text. Some \" text. Some \'\'\'\'\'\' text. Some text\"\"\"\""""
+e_single_double_4_5 = """ Some \' text. Some \" text. Some \'\'\'\'\'\' text. Some text\"\"\"\"\""""
+e_single_double_4_6 = """ Some \' text. Some \" text. Some \'\'\'\'\'\' text. Some text\"\"\"\"\"\""""
+e_single_double_4_7 = """ Some \' text. Some \" text. Some \'\'\'\'\'\' text. Some text\"\"\"\"\"\"\""""
+e_single_double_4_8 = """ Some \' text. Some \" text. Some \'\'\'\'\'\' text. Some text\"\"\"\"\"\"\"\""""
+e_single_double_4_9 = """ Some \' text. Some \" text. Some \'\'\'\'\'\' text. Some text\"\"\"\"\"\"\"\"\""""
+
+e_double_5_0 = """ Some text"""
+e_double_5_1 = """ Some text\""""
+e_double_5_2 = """ Some text\"\""""
+e_double_5_3 = """ Some text\"\"\""""
+e_double_5_4 = """ Some text\"\"\"\""""
+e_double_5_5 = """ Some text\"\"\"\"\""""
+e_double_5_6 = """ Some text\"\"\"\"\"\""""
+e_double_5_7 = """ Some text\"\"\"\"\"\"\""""
+e_double_5_8 = """ Some text\"\"\"\"\"\"\"\""""
+e_double_5_9 = """ Some text\"\"\"\"\"\"\"\"\""""
+
+e_single_5_0 = ''' Some text'''
+e_single_5_1 = ''' Some text\''''
+e_single_5_2 = ''' Some text\'\''''
+e_single_5_3 = ''' Some text\'\'\''''
+e_single_5_4 = ''' Some text\'\'\'\''''
+e_single_5_5 = ''' Some text\'\'\'\'\''''
+e_single_5_6 = ''' Some text\'\'\'\'\'\''''
+e_single_5_7 = ''' Some text\'\'\'\'\'\'\''''
+e_single_5_8 = ''' Some text\'\'\'\'\'\'\'\''''
+e_single_5_9 = ''' Some text\'\'\'\'\'\'\'\'\''''
+
+
+
+e_single_double_5 = f"Using \"Quotes within quotes\" is a pain."

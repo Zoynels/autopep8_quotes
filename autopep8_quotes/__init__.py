@@ -76,7 +76,7 @@ def color_diff(diff):
             yield line
 
 
-def isevaluatable(s, prefix):
+def isevaluatable(s, prefix=""):
     """Check string is calculatable and get it's value"""
     try:
         v = ast.literal_eval(s)
@@ -178,6 +178,8 @@ def normalize_string_quotes(leaf, args, token_dict):
     Doesn't parse and fix strings nested in f-strings (yet).
 
     Original from https://github.com/psf/black
+    Second return value:
+        if result > 0 then error else no error but may be warning
     """
     def parse(leaf, args):
         value = leaf.lstrip("furbFURB")
@@ -188,23 +190,26 @@ def normalize_string_quotes(leaf, args, token_dict):
         quotes["'"] = '"'
         quotes['"'] = "'"
 
-        if value[:3] == args.multiline_quotes:
-            # return leaf, 1
-            orig_quote = args.multiline_quotes
-            new_quote = args.multiline_quotes
-        elif value[:3] == quotes[args.multiline_quotes]:
-            orig_quote = quotes[args.multiline_quotes]
-            new_quote = args.multiline_quotes
-        elif value[0] == args.inline_quotes:
-            orig_quote = args.inline_quotes
-            new_quote = quotes[args.inline_quotes]
+        if value[:3] == value[-3:]:
+            if value[:3] == args.multiline_quotes:
+                orig_quote = args.multiline_quotes
+                new_quote = args.multiline_quotes
+            elif value[:3] == quotes[args.multiline_quotes]:
+                orig_quote = quotes[args.multiline_quotes]
+                new_quote = args.multiline_quotes
+        elif value[:1] == value[-1:]:
+            if value[0] == args.inline_quotes:
+                orig_quote = args.inline_quotes
+                new_quote = quotes[args.inline_quotes]
+            else:
+                orig_quote = quotes[args.inline_quotes]
+                new_quote = args.inline_quotes
         else:
-            orig_quote = quotes[args.inline_quotes]
-            new_quote = args.inline_quotes
+            return leaf, 11  # Start quote is not equal to end quote
 
         first_quote_pos = leaf.find(orig_quote)
         if first_quote_pos == -1:
-            return leaf, 2  # There's an internal error
+            return leaf, 12  # There's an internal error
 
         prefix = leaf[:first_quote_pos]
         unescaped_new_quote = re.compile(rf"(([^\\]|^)(\\\\)*){new_quote}")
@@ -220,7 +225,7 @@ def normalize_string_quotes(leaf, args, token_dict):
             if unescaped_new_quote.search(body):
                 # There's at least one unescaped new_quote in this raw string
                 # so converting is impossible
-                return leaf, 3
+                return leaf, 13
 
             # Do not introduce or remove backslashes in raw strings
             new_body = body
@@ -233,7 +238,7 @@ def normalize_string_quotes(leaf, args, token_dict):
 
             if body != new_body:
                 # Consider the string without unnecessary escapes as the original
-                return check_string(leaf, prefix, old_body, new_body, orig_quote, new_quote, args=args, token_dict=token_dict), 8
+                return check_string(leaf, prefix, old_body, new_body, orig_quote, new_quote, args=args, token_dict=token_dict)
             new_body = sub_twice(escaped_orig_quote, rf"\1\2{orig_quote}", new_body)
             new_body = sub_twice(unescaped_new_quote, rf"\1\\{new_quote}", new_body)
         if "f" in prefix.casefold():
@@ -249,7 +254,7 @@ def normalize_string_quotes(leaf, args, token_dict):
             for m in matches:
                 if "\\" in str(m):
                     # Do not introduce backslashes in interpolated expressions
-                    return leaf, 4
+                    return leaf, 14
 
         if len(new_quote) == 3 and new_body[-1:] == new_quote[0]:
             # edge case:
@@ -257,12 +262,12 @@ def normalize_string_quotes(leaf, args, token_dict):
         orig_escape_count = body.count("\\")
         new_escape_count = new_body.count("\\")
         if new_escape_count > orig_escape_count:
-            return leaf, 5  # Do not introduce more escaping
+            return leaf, 15  # Do not introduce more escaping
 
         if new_escape_count == orig_escape_count and orig_quote == args.inline_quotes:
-            return leaf, 6  # Prefer double quotes
+            return leaf, 16  # Prefer double quotes
 
-        return check_string(leaf, prefix, old_body, new_body, orig_quote, new_quote, args=args, token_dict=token_dict), 0
+        return check_string(leaf, prefix, old_body, new_body, orig_quote, new_quote, args=args, token_dict=token_dict)
 
     if args.normalize_string_quotes:
         result_string, code = parse(leaf, args=args)
@@ -282,15 +287,61 @@ def sub_twice(regex, replacement, original, prefix=None, new_quote=None):
 
     This is used by string normalization to perform replaces on
     overlapping matches.
+    TODO: If bad replacement, then need to replace by one occurence and then check is it bad or not.
+        If not bad then replacement is good and need to save
+        If bad then skip this change and go to next.
+        https://docs.python.org/3/library/re.html#re.sub
+            count -- all replacements before bad could be fixed. But what to do with next? Split text?
     """
     return regex.sub(replacement, regex.sub(replacement, original))
+
+
+def get_rep_body(body, prefix, quote):
+    """Escape symbol by symbol to get new_body"""
+    new_body = ""
+    delim = "\\"
+    space = " "
+    L = len(body)
+    for i, char in enumerate(body):
+        last_line = (i == L - 1)
+        # Standart line
+        # ast.literal_eval: if last symbol is quote[0] then it should be escaped
+        if (body[i] != quote[0]) or (not last_line):
+            v10 = f"{prefix}{quote}{new_body + body[i]}{quote}"
+            v10_res = isevaluatable(v10)
+            if v10_res[0]:
+                new_body = new_body + body[i]
+                # print(i , L - 1, "V10", new_body)
+                continue
+
+        if not last_line:
+            # All symbols instead of last symbol which should be escaped
+            # ast.literal_eval: if last symbol is quote[0] then it should be escaped
+            # but that it it not last sybmol of body then check if it not a last
+            v11 = f"{prefix}{quote}{new_body + body[i] + space}{quote}"
+            v11_res = isevaluatable(v11)
+            if v11_res[0]:
+                new_body = new_body + body[i]
+                # print(i , L - 1, "	V11", new_body)
+                continue
+
+        # Escaped symbol
+        v20 = f"{prefix}{quote}{new_body+delim+body[i]}{quote}"
+        v20_res = isevaluatable(v20)
+        if v20_res[0]:
+            new_body = new_body + delim + body[i]
+            # print(i , L - 1, "		V20", new_body)
+            continue
+
+    # Result line. It could be not normal 
+    return f"{prefix}{quote}{new_body}{quote}"
 
 
 def check_string(original, prefix, old_body, new_body, orig_quote, new_quote, args, token_dict):
     v1 = f"{prefix}{new_quote}{new_body}{new_quote}"
     v2 = f"{prefix}{orig_quote}{new_body}{orig_quote}"
     if original == v1:
-        return original
+        return original, 0
 
     v0_res = isevaluatable(original, prefix)
     if not v0_res[0]:
@@ -300,7 +351,7 @@ def check_string(original, prefix, old_body, new_body, orig_quote, new_quote, ar
         print("    " + col_red + f"Position:   {token_dict['pos']}")
         print("    " + col_red + f"String:     {token_dict['token_string']}")
         print("")
-        return original
+        return original, 1
 
     v1_res = isevaluatable(v1, prefix)
     # Good string and value is not changed!
@@ -308,15 +359,22 @@ def check_string(original, prefix, old_body, new_body, orig_quote, new_quote, ar
         if args.debug:
             print("#" * 100)
             print(args.debug)
-            print(colorama.Style.BRIGHT + colorama.Back.RED, f"Return v1: {v1}")
-        return v1
+            print(col_red + f"Return v1: {v1}")
+        return v1, -1
 
     v2_res = isevaluatable(v2, prefix)
     # Good string and value is not changed!
     if v2_res[0] and (v2_res[1] == v0_res[1]):
         if args.debug:
-            print(colorama.Style.BRIGHT + colorama.Back.RED, f"Return v2: {v2}")
-        return v2
+            print(col_red + f"Return v2: {v2}")
+        return v2, -2
+
+    v3 = get_rep_body(new_body, prefix, new_quote)
+    v3_res = isevaluatable(v3, prefix)
+    if v3_res[0] and (v3_res[1] == v0_res[1]):
+        if args.debug:
+            print(col_red + f"Return v3: {v3}")
+        return v3, -3
 
     print("")
     print(col_red + f"Can't transform, return original! Please simpify string manually!")
@@ -328,7 +386,7 @@ def check_string(original, prefix, old_body, new_body, orig_quote, new_quote, ar
     print("        " + col_red + f"Try v2:     {v2}")
     print("")
 
-    return original
+    return original, 2
 
 
 def open_with_encoding(filename, encoding, mode="rb"):
