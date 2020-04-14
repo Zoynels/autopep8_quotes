@@ -574,11 +574,13 @@ def _main(args, standard_out, standard_error):
 
     parser.add_argument("-i", "--in-place", action="store_true",
                         help="Make changes to files. "
-                        "Could be combined with --diff")
+                        "Could be combined with --diff and can't combined with --in-place"
+                        "If --inplace --new-file then will be used only --new-file")
     parser.add_argument("-n", "--new-file", action="store_true",
                         help="Make changes to files and create new file with "
                         ".autopep8_quotesing extention. "
-                        "Could be combined with --diff and can't combined with --in-place")
+                        "Could be combined with --diff and can't combined with --in-place"
+                        "If --inplace --new-file then will be used only --new-file")
     parser.add_argument("-d", "--diff", action="store_true",
                         help="Print changes without make changes. "
                         "Could be combined with --in-place")
