@@ -25,7 +25,8 @@
 
 """Unify strings to all use the same quote.
 Unify all prefixex to lowercase.
-Remove u"" prefixes."""
+Remove u"" prefixes.
+Source: https://github.com/Zoynels/autopep8_quotes"""
 
 from __future__ import print_function, unicode_literals
 
@@ -38,6 +39,7 @@ import sys
 import tokenize
 import untokenize  # type: ignore
 import ast
+from enum import Enum
 
 __version__ = "0.6"
 
@@ -52,12 +54,15 @@ try:
     colorama.init(autoreset=True)
 except ImportError:  # fallback so that the imported classes always exist
     class ColorFallback():
-        def __getattr__(self, name): return ""
+        def __getattr__(self, name):
+            return ""
+
     from types import SimpleNamespace
     colorama = SimpleNamespace()
     colorama.Fore = ColorFallback()
     colorama.Back = ColorFallback()
     colorama.Style = ColorFallback()
+
 
 col_red = colorama.Style.BRIGHT + colorama.Back.RED
 col_green = colorama.Style.BRIGHT + colorama.Back.GREEN
@@ -81,13 +86,13 @@ def isevaluatable(s, prefix=""):
     try:
         v = ast.literal_eval(s)
         return True, v
-    except:
+    except BaseException:
         try:
             # ast.literal_eval not work with f-strings
             # try to calculate without prefix
             v = ast.literal_eval(s[len(prefix):])
             return True, v
-        except:
+        except BaseException:
             return False, None
 
 
@@ -171,6 +176,21 @@ def remove_string_u_prefix(leaf, args, token_dict):
     return leaf
 
 
+class quotes_codes(Enum):
+    quote_bruteforce_good = -3
+    old_quote_good = -2
+    new_quote_good = -1
+    original_equal = 0
+    original_bad = 1
+    cant_transform = 2
+    quote_start_is_not_equal_end_v1 = 11
+    quote_start_is_not_equal_end_v2 = 12
+    unescaped_quote_in_r = 13
+    backslashes_in_expressions = 14
+    do_not_introduce_more_escaping = 15
+    prefer_double_quotes = 16
+
+
 def normalize_string_quotes(leaf, args, token_dict):
     """Prefer quotes but only if it doesn't cause more escaping.
 
@@ -181,7 +201,7 @@ def normalize_string_quotes(leaf, args, token_dict):
     Second return value:
         if result > 0 then error else no error but may be warning
     """
-    def parse(leaf, args):
+    def parse(leaf, args, change_quote=False):
         value = leaf.lstrip("furbFURB")
 
         quotes = {}
@@ -193,8 +213,11 @@ def normalize_string_quotes(leaf, args, token_dict):
         if value[:3] == value[-3:]:
             if value[:3] == args.multiline_quotes:
                 orig_quote = args.multiline_quotes
-                new_quote = args.multiline_quotes
-            elif value[:3] == quotes[args.multiline_quotes]:
+                if change_quote:
+                    new_quote = quotes[args.multiline_quotes]
+                else:
+                    new_quote = args.multiline_quotes
+            else:
                 orig_quote = quotes[args.multiline_quotes]
                 new_quote = args.multiline_quotes
         elif value[:1] == value[-1:]:
@@ -205,11 +228,11 @@ def normalize_string_quotes(leaf, args, token_dict):
                 orig_quote = quotes[args.inline_quotes]
                 new_quote = args.inline_quotes
         else:
-            return leaf, 11  # Start quote is not equal to end quote
+            return leaf, quotes_codes.quote_start_is_not_equal_end_v1
 
         first_quote_pos = leaf.find(orig_quote)
         if first_quote_pos == -1:
-            return leaf, 12  # There's an internal error
+            return leaf, quotes_codes.quote_start_is_not_equal_end_v2
 
         prefix = leaf[:first_quote_pos]
         unescaped_new_quote = re.compile(rf"(([^\\]|^)(\\\\)*){new_quote}")
@@ -225,7 +248,7 @@ def normalize_string_quotes(leaf, args, token_dict):
             if unescaped_new_quote.search(body):
                 # There's at least one unescaped new_quote in this raw string
                 # so converting is impossible
-                return leaf, 13
+                return leaf, quotes_codes.unescaped_quote_in_r
 
             # Do not introduce or remove backslashes in raw strings
             new_body = body
@@ -254,7 +277,7 @@ def normalize_string_quotes(leaf, args, token_dict):
             for m in matches:
                 if "\\" in str(m):
                     # Do not introduce backslashes in interpolated expressions
-                    return leaf, 14
+                    return leaf, quotes_codes.backslashes_in_expressions
 
         if len(new_quote) == 3 and new_body[-1:] == new_quote[0]:
             # edge case:
@@ -262,15 +285,22 @@ def normalize_string_quotes(leaf, args, token_dict):
         orig_escape_count = body.count("\\")
         new_escape_count = new_body.count("\\")
         if new_escape_count > orig_escape_count:
-            return leaf, 15  # Do not introduce more escaping
+            return leaf, quotes_codes.do_not_introduce_more_escaping
 
         if new_escape_count == orig_escape_count and orig_quote == args.inline_quotes:
-            return leaf, 16  # Prefer double quotes
+            return leaf, quotes_codes.prefer_double_quotes
 
         return check_string(leaf, prefix, old_body, new_body, orig_quote, new_quote, args=args, token_dict=token_dict)
 
     if args.normalize_string_quotes:
         result_string, code = parse(leaf, args=args)
+        if code == quotes_codes.quote_bruteforce_good:
+            # Try to change quote """ => ''' and vice versa
+            result_string_v2, code_v2 = parse(leaf, args=args, change_quote=True)
+            if (code_v2 != quotes_codes.cant_transform) and (code_v2 != quotes_codes.quote_bruteforce_good):
+                # If
+                result_string, code = result_string_v2, code_v2
+
         if args.debug:
             print("normalize_string_quotes: ")
             print("    code:          ", code)
@@ -333,7 +363,7 @@ def get_rep_body(body, prefix, quote):
             # print(i , L - 1, "		V20", new_body)
             continue
 
-    # Result line. It could be not normal 
+    # Result line. It could be not normal
     return f"{prefix}{quote}{new_body}{quote}"
 
 
@@ -341,7 +371,7 @@ def check_string(original, prefix, old_body, new_body, orig_quote, new_quote, ar
     v1 = f"{prefix}{new_quote}{new_body}{new_quote}"
     v2 = f"{prefix}{orig_quote}{new_body}{orig_quote}"
     if original == v1:
-        return original, 0
+        return original, quotes_codes.original_equal
 
     v0_res = isevaluatable(original, prefix)
     if not v0_res[0]:
@@ -351,7 +381,7 @@ def check_string(original, prefix, old_body, new_body, orig_quote, new_quote, ar
         print("    " + col_red + f"Position:   {token_dict['pos']}")
         print("    " + col_red + f"String:     {token_dict['token_string']}")
         print("")
-        return original, 1
+        return original, quotes_codes.original_bad
 
     v1_res = isevaluatable(v1, prefix)
     # Good string and value is not changed!
@@ -360,21 +390,21 @@ def check_string(original, prefix, old_body, new_body, orig_quote, new_quote, ar
             print("#" * 100)
             print(args.debug)
             print(col_red + f"Return v1: {v1}")
-        return v1, -1
+        return v1, quotes_codes.new_quote_good
 
     v2_res = isevaluatable(v2, prefix)
     # Good string and value is not changed!
     if v2_res[0] and (v2_res[1] == v0_res[1]):
         if args.debug:
             print(col_red + f"Return v2: {v2}")
-        return v2, -2
+        return v2, quotes_codes.old_quote_good
 
     v3 = get_rep_body(new_body, prefix, new_quote)
     v3_res = isevaluatable(v3, prefix)
     if v3_res[0] and (v3_res[1] == v0_res[1]):
         if args.debug:
             print(col_red + f"Return v3: {v3}")
-        return v3, -3
+        return v3, quotes_codes.quote_bruteforce_good
 
     print("")
     print(col_red + f"Can't transform, return original! Please simpify string manually!")
@@ -385,8 +415,7 @@ def check_string(original, prefix, old_body, new_body, orig_quote, new_quote, ar
     print("        " + col_red + f"Try v1:     {v1}")
     print("        " + col_red + f"Try v2:     {v2}")
     print("")
-
-    return original, 2
+    return original, quotes_codes.cant_transform
 
 
 def open_with_encoding(filename, encoding, mode="rb"):
