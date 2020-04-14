@@ -33,15 +33,24 @@ optional arguments:
   -h, --help
                         Show this help message and exit
   -f FILE, --conf_file FILE
-                        Specify config file (default: None)
+                        Specify config file
+                        (default: None)
   -a, --autodetect_conf
                         Try to detect config file: *.ini, *.cfg
                         (default: True)
   -i, --in-place
-                        Make changes to files. Could be combined with --diff
+                        Make changes to files. 
+                        Could be combined with --diff and can't combined with --in-place.
+                        If --inplace --new-file then will be used only --new-file.
+                        (default: False)
+  -n, --new-file
+                        Make changes to files and create new file with .autopep8_quotesing extention.
+                        Could be combined with --diff and can't combined with --in-place.
+                        If --inplace --new-file then will be used only --new-file.
                         (default: False)
   -d, --diff
-                        Print changes without make changes. Could be combined with --in-place
+                        Print changes without make changes.
+                        Could be combined with --in-place.
                         (default: False)
   -c, --check-only
                         Exit with a status code of 1 if any changes are still needed
