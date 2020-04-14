@@ -199,6 +199,17 @@ e_single_double_4_7 = """ Some \' text. Some \" text. Some \'\'\'\'\'\' text. So
 e_single_double_4_8 = """ Some \' text. Some \" text. Some \'\'\'\'\'\' text. Some text\"\"\"\"\"\"\"\""""
 e_single_double_4_9 = """ Some \' text. Some \" text. Some \'\'\'\'\'\' text. Some text\"\"\"\"\"\"\"\"\""""
 
+e_double_4_0 = """ Some \' text. Some \" text. Some text. Some text"""
+e_double_4_1 = """ Some \' text. Some \" text. Some text. Some text\""""
+e_double_4_2 = """ Some \' text. Some \" text. Some text. Some text\"\""""
+e_double_4_3 = """ Some \' text. Some \" text. Some text. Some text\"\"\""""
+e_double_4_4 = """ Some \' text. Some \" text. Some text. Some text\"\"\"\""""
+e_double_4_5 = """ Some \' text. Some \" text. Some text. Some text\"\"\"\"\""""
+e_double_4_6 = """ Some \' text. Some \" text. Some text. Some text\"\"\"\"\"\""""
+e_double_4_7 = """ Some \' text. Some \" text. Some text. Some text\"\"\"\"\"\"\""""
+e_double_4_8 = """ Some \' text. Some \" text. Some text. Some text\"\"\"\"\"\"\"\""""
+e_double_4_9 = """ Some \' text. Some \" text. Some text. Some text\"\"\"\"\"\"\"\"\""""
+
 e_double_5_0 = """ Some text"""
 e_double_5_1 = """ Some text\""""
 e_double_5_2 = """ Some text\"\""""
@@ -220,6 +231,28 @@ e_single_5_6 = ''' Some text\'\'\'\'\'\''''
 e_single_5_7 = ''' Some text\'\'\'\'\'\'\''''
 e_single_5_8 = ''' Some text\'\'\'\'\'\'\'\''''
 e_single_5_9 = ''' Some text\'\'\'\'\'\'\'\'\''''
+
+e_double_6_0 = " Some text"
+e_double_6_1 = " Some text\""
+e_double_6_2 = " Some text\"\""
+e_double_6_3 = " Some text\"\"\""
+e_double_6_4 = " Some text\"\"\"\""
+e_double_6_5 = " Some text\"\"\"\"\""
+e_double_6_6 = " Some text\"\"\"\"\"\""
+e_double_6_7 = " Some text\"\"\"\"\"\"\""
+e_double_6_8 = " Some text\"\"\"\"\"\"\"\""
+e_double_6_9 = " Some text\"\"\"\"\"\"\"\"\""
+
+e_single_6_0 = ' Some text'
+e_single_6_1 = ' Some text\''
+e_single_6_2 = ' Some text\'\''
+e_single_6_3 = ' Some text\'\'\''
+e_single_6_4 = ' Some text\'\'\'\''
+e_single_6_5 = ' Some text\'\'\'\'\''
+e_single_6_6 = ' Some text\'\'\'\'\'\''
+e_single_6_7 = ' Some text\'\'\'\'\'\'\''
+e_single_6_8 = ' Some text\'\'\'\'\'\'\'\''
+e_single_6_9 = ' Some text\'\'\'\'\'\'\'\'\''
 
 
 
