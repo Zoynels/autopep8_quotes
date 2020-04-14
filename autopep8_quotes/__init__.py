@@ -37,6 +37,7 @@ import sys
 
 import tokenize
 import untokenize  # type: ignore
+import ast
 
 __version__ = "0.6"
 
@@ -46,16 +47,59 @@ try:
 except NameError:
     unicode = str
 
+try:
+    import colorama
+    colorama.init(autoreset=True)
+except ImportError:  # fallback so that the imported classes always exist
+    class ColorFallback():
+        def __getattr__(self, name): return ""
+    from types import SimpleNamespace
+    colorama = SimpleNamespace()
+    colorama.Fore = ColorFallback()
+    colorama.Back = ColorFallback()
+    colorama.Style = ColorFallback()
 
-def format_code(source, args):
+col_red = colorama.Style.BRIGHT + colorama.Back.RED
+col_green = colorama.Style.BRIGHT + colorama.Back.GREEN
+
+
+def color_diff(diff):
+    """Colorize diff lines"""
+    for line in diff:
+        if line.startswith("+"):
+            yield colorama.Fore.GREEN + line + colorama.Fore.RESET
+        elif line.startswith("-"):
+            yield colorama.Fore.RED + line + colorama.Fore.RESET
+        elif line.startswith("^"):
+            yield colorama.Fore.BLUE + line + colorama.Fore.RESET
+        else:
+            yield line
+
+
+def isevaluatable(s, prefix):
+    """Check string is calculatable and get it's value"""
+    try:
+        v = ast.literal_eval(s)
+        return True, v
+    except:
+        try:
+            # ast.literal_eval not work with f-strings
+            # try to calculate without prefix
+            v = ast.literal_eval(s[len(prefix):])
+            return True, v
+        except:
+            return False, None
+
+
+def format_code(source, args, filename):
     """Return source code with quotes unified."""
     try:
-        return _format_code(source, args)
+        return _format_code(source, args, filename)
     except (tokenize.TokenError, IndentationError):
         return source
 
 
-def _format_code(source, args):
+def _format_code(source, args, filename):
     """Return source code with quotes unified."""
     if not source:
         return source
@@ -69,9 +113,10 @@ def _format_code(source, args):
          end,
          line) in tokenize.generate_tokens(sio.readline):
         if token_type == tokenize.STRING:
-            token_string = normalize_string_quotes(token_string, args=args)
-            token_string = lowercase_string_prefix(token_string, args=args)
-            token_string = remove_string_u_prefix(token_string, args=args)
+            token_dict = get_token_dict(token_type, token_string, start, end, line, filename)
+            token_string = normalize_string_quotes(token_string, args=args, token_dict=token_dict)
+            token_string = lowercase_string_prefix(token_string, args=args, token_dict=token_dict)
+            token_string = remove_string_u_prefix(token_string, args=args, token_dict=token_dict)
 
         modified_tokens.append(
             (token_type, token_string, start, end, line))
@@ -79,11 +124,22 @@ def _format_code(source, args):
     return untokenize.untokenize(modified_tokens)
 
 
-def get_starts_symbol(token_string):
-    token_string[0]
+def get_token_dict(token_type, token_string, start, end, line, filename):
+    _dict = {}
+    _dict["token_type"] = token_type
+    _dict["token_string"] = token_string
+    _dict["start"] = start
+    _dict["end"] = end
+    _dict["line"] = line
+    _dict["filename"] = filename
+    _dict["text"] = f"Line {start[0]}, pos {start[1]} - line {end[0]}, pos {end[1]}: {token_string}"
+    _dict["pos"] = f"Line:pos ({start[0]}:{start[1]} - {end[0]}:{end[1]})"
+    _dict["pos2"] = f"Line {start[0]}, pos {start[1]} - line {end[0]}, pos {end[1]}"
+
+    return _dict
 
 
-def lowercase_string_prefix(leaf, args):
+def lowercase_string_prefix(leaf, args, token_dict):
     """Make furbFURB prefixes lowercase.
 
     Original from https://github.com/psf/black
@@ -101,7 +157,7 @@ def lowercase_string_prefix(leaf, args):
     return leaf
 
 
-def remove_string_u_prefix(leaf, args):
+def remove_string_u_prefix(leaf, args, token_dict):
     """Removes any u prefix from the string.
 
     Original from https://github.com/psf/black
@@ -115,7 +171,7 @@ def remove_string_u_prefix(leaf, args):
     return leaf
 
 
-def normalize_string_quotes(leaf, args):
+def normalize_string_quotes(leaf, args, token_dict):
     """Prefer quotes but only if it doesn't cause more escaping.
 
     Adds or removes backslashes as appropriate.
@@ -133,7 +189,9 @@ def normalize_string_quotes(leaf, args):
         quotes['"'] = "'"
 
         if value[:3] == args.multiline_quotes:
-            return leaf, 1
+            # return leaf, 1
+            orig_quote = args.multiline_quotes
+            new_quote = args.multiline_quotes
         elif value[:3] == quotes[args.multiline_quotes]:
             orig_quote = quotes[args.multiline_quotes]
             new_quote = args.multiline_quotes
@@ -152,7 +210,12 @@ def normalize_string_quotes(leaf, args):
         unescaped_new_quote = re.compile(rf"(([^\\]|^)(\\\\)*){new_quote}")
         escaped_new_quote = re.compile(rf"([^\\]|^)\\((?:\\\\)*){new_quote}")
         escaped_orig_quote = re.compile(rf"([^\\]|^)\\((?:\\\\)*){orig_quote}")
+
+        escaped_quote_single_el_v1 = re.compile(rf"([^\\]|^)\\((?:\\\\)*){new_quote[0]}")
+        escaped_quote_single_el_v2 = re.compile(rf"([^\\]|^)\\((?:\\\\)*){quotes[new_quote[0]][0]}")
+
         body = leaf[first_quote_pos + len(orig_quote): -len(orig_quote)]
+        old_body = body
         if "r" in prefix.casefold():
             if unescaped_new_quote.search(body):
                 # There's at least one unescaped new_quote in this raw string
@@ -164,10 +227,13 @@ def normalize_string_quotes(leaf, args):
         else:
             # remove unnecessary escapes
             new_body = sub_twice(escaped_new_quote, rf"\1\2{new_quote}", body)
+            if len(new_quote) == 3:
+                new_body = sub_twice(escaped_quote_single_el_v1, rf"\1\2{new_quote[0]}", new_body)
+                new_body = sub_twice(escaped_quote_single_el_v2, rf"\1\2{quotes[new_quote[0]][0]}", new_body)
+
             if body != new_body:
                 # Consider the string without unnecessary escapes as the original
-                body = new_body
-                leaf = f"{prefix}{orig_quote}{body}{orig_quote}"
+                return check_string(leaf, prefix, old_body, new_body, orig_quote, new_quote, args=args, token_dict=token_dict), 8
             new_body = sub_twice(escaped_orig_quote, rf"\1\2{orig_quote}", new_body)
             new_body = sub_twice(unescaped_new_quote, rf"\1\\{new_quote}", new_body)
         if "f" in prefix.casefold():
@@ -196,22 +262,73 @@ def normalize_string_quotes(leaf, args):
         if new_escape_count == orig_escape_count and orig_quote == args.inline_quotes:
             return leaf, 6  # Prefer double quotes
 
-        return f"{prefix}{new_quote}{new_body}{new_quote}", 0
+        return check_string(leaf, prefix, old_body, new_body, orig_quote, new_quote, args=args, token_dict=token_dict), 0
 
     if args.normalize_string_quotes:
         result_string, code = parse(leaf, args=args)
+        if args.debug:
+            print("normalize_string_quotes: ")
+            print("    code:          ", code)
+            print("    input_sting:   ", leaf)
+            print("    result_string: ", result_string)
+
         if result_string is not None:
             return result_string
     return leaf
 
 
-def sub_twice(regex, replacement, original):
+def sub_twice(regex, replacement, original, prefix=None, new_quote=None):
     """Replace `regex` with `replacement` twice on `original`.
 
     This is used by string normalization to perform replaces on
     overlapping matches.
     """
     return regex.sub(replacement, regex.sub(replacement, original))
+
+
+def check_string(original, prefix, old_body, new_body, orig_quote, new_quote, args, token_dict):
+    v1 = f"{prefix}{new_quote}{new_body}{new_quote}"
+    v2 = f"{prefix}{orig_quote}{new_body}{orig_quote}"
+    if original == v1:
+        return original
+
+    v0_res = isevaluatable(original, prefix)
+    if not v0_res[0]:
+        print("")
+        print(col_red + f"Can't check original! Please test string manually!")
+        print("    " + col_red + f"Filename:   {token_dict['filename']}")
+        print("    " + col_red + f"Position:   {token_dict['pos']}")
+        print("    " + col_red + f"String:     {token_dict['token_string']}")
+        print("")
+        return original
+
+    v1_res = isevaluatable(v1, prefix)
+    # Good string and value is not changed!
+    if v1_res[0] and (v1_res[1] == v0_res[1]):
+        if args.debug:
+            print("#" * 100)
+            print(args.debug)
+            print(colorama.Style.BRIGHT + colorama.Back.RED, f"Return v1: {v1}")
+        return v1
+
+    v2_res = isevaluatable(v2, prefix)
+    # Good string and value is not changed!
+    if v2_res[0] and (v2_res[1] == v0_res[1]):
+        if args.debug:
+            print(colorama.Style.BRIGHT + colorama.Back.RED, f"Return v2: {v2}")
+        return v2
+
+    print("")
+    print(col_red + f"Can't transform, return original! Please simpify string manually!")
+    print("    " + col_red + f"Filename:   {token_dict['filename']}")
+    print("    " + col_red + f"Position:   {token_dict['pos']}")
+    print("    " + col_red + f"String:     {token_dict['token_string']}")
+    print("        " + col_red + f"Original:   {original}")
+    print("        " + col_red + f"Try v1:     {v1}")
+    print("        " + col_red + f"Try v2:     {v2}")
+    print("")
+
+    return original
 
 
 def open_with_encoding(filename, encoding, mode="rb"):
@@ -252,13 +369,20 @@ def format_file(filename, args, standard_out):
         source = source.decode(encoding)
         formatted_source = format_code(
             source,
-            args=args)
+            args=args,
+            filename=filename)
 
     if source != formatted_source:
         if args.in_place:
             with open_with_encoding(filename, mode="w",
                                     encoding=encoding) as output_file:
                 output_file.write(formatted_source)
+        elif args.new_file:
+            with open_with_encoding(filename + ".autopep8_quotes",
+                                    mode="w",
+                                    encoding=encoding) as output_file:
+                output_file.write(formatted_source)
+
         if args.diff:
             import difflib
             diff = difflib.unified_diff(
@@ -267,9 +391,10 @@ def format_file(filename, args, standard_out):
                 "before/" + filename,
                 "after/" + filename,
                 lineterm="")
-            standard_out.write("\n".join(list(diff) + [""]))
 
-        if args.in_place or args.diff:
+            standard_out.write("\n".join(list(color_diff(diff)) + [""]))
+
+        if args.in_place or args.new_file or args.diff:
             return True
 
     return False
@@ -284,36 +409,56 @@ def _main(args, standard_out, standard_error):
     """
     import argparse
     import configparser
+
+    def str2bool(v):
+        if isinstance(v, bool):
+            return v
+        if v.lower() in ("yes", "true", "t", "y", "1"):
+            return True
+        elif v.lower() in ("no", "false", "f", "n", "0"):
+            return False
+        else:
+            return False
+            # raise argparse.ArgumentTypeError('Boolean value expected.')
+
+    def str2bool_dict(dict1, dict2):
+        for key in dict1:
+            if isinstance(dict1[key], (bool)):
+                dict2[key] = str2bool(dict2[key])
+
     conf_parser = argparse.ArgumentParser(add_help=False)
     conf_parser.add_argument("-f", "--conf_file",
-                        help="Specify config file", metavar="FILE")
+                             help="Specify config file", metavar="FILE")
     conf_parser.add_argument("-a", "--autodetect_conf",
-                        action="store_true", default=True,
-                        help="Try to detect config file: *.ini, *.cfg")
+                             action="store_true", default=True,
+                             help="Try to detect config file: *.ini, *.cfg")
 
     argv, remaining_argv = conf_parser.parse_known_args()
 
     defaults = {}
+    defaults["debug"] = False
     defaults["show_args"] = False
-    defaults["check-only"] = False
+    defaults["check_only"] = False
     defaults["diff"] = False
-    defaults["in-place"] = False
+    defaults["in_place"] = False
+    defaults["new_file"] = False
     defaults["recursive"] = False
     defaults["normalize_string_quotes"] = True
     defaults["inline_quotes"] = '"'
     defaults["multiline_quotes"] = '"""'
     defaults["lowercase_string_prefix"] = True
     defaults["remove_string_u_prefix"] = True
+    defaults["filename"] = [r".*\.py$"]
 
     cfg_files = []
     if argv.autodetect_conf:
         for f in os.listdir():
-            if f.endswith('.ini') or f.endswith('.cfg'):
+            if f.endswith(".ini") or f.endswith(".cfg"):
                 cfg_files.append(f)
     cfg_files = sorted(cfg_files)
     if argv.conf_file:
         cfg_files.append(argv.conf_file)
-   
+
     for f in cfg_files:
         try:
             config = configparser.SafeConfigParser()
@@ -321,11 +466,12 @@ def _main(args, standard_out, standard_error):
             for sec in ["pep8", "flake8", "autopep8", "autopep8_quotes"]:
                 try:
                     _dict = dict(config.items(sec))
-                    _dict = {key.replace("-", "_"):value for (key,value) in _dict.items()}
+                    _dict = {key.replace("-", "_"): value for (key, value) in _dict.items()}
+                    str2bool_dict(defaults, _dict)
                     defaults.update(_dict)
-                except:
+                except BaseException:
                     pass
-        except:
+        except BaseException:
             pass
 
     # Parse rest of arguments
@@ -342,6 +488,10 @@ def _main(args, standard_out, standard_error):
     parser.add_argument("-i", "--in-place", action="store_true",
                         help="Make changes to files. "
                         "Could be combined with --diff")
+    parser.add_argument("-n", "--new-file", action="store_true",
+                        help="Make changes to files and create new file with "
+                        ".autopep8_quotesing extention. "
+                        "Could be combined with --diff and can't combined with --in-place")
     parser.add_argument("-d", "--diff", action="store_true",
                         help="Print changes without make changes. "
                         "Could be combined with --in-place")
@@ -349,10 +499,14 @@ def _main(args, standard_out, standard_error):
                         help="Exit with a status code of 1 if any changes are still needed")
     parser.add_argument("-r", "--recursive", action="store_true",
                         help="Drill down directories recursively")
+    parser.add_argument("--filename",
+                        type=str,
+                        nargs="+",
+                        help="Check only for filenames matching the patterns.")
     parser.add_argument("--normalize_string_quotes", action="store_true",
                         help="Normalize all quotes to standart "
                              "by options --multiline_quotes and --inline_quotes")
-    parser.add_argument("--inline_quotes", 
+    parser.add_argument("--inline_quotes",
                         help="Preferred inline_quotes. "
                         "Works only when --normalize_string_quotes is True",
                         choices=["'", '"'])
@@ -369,10 +523,22 @@ def _main(args, standard_out, standard_error):
                         help="Show program's version number and exit")
     parser.add_argument("--show_args", action="store_true",
                         help="Show readed args for script and exit")
+    parser.add_argument("--debug", action="store_true",
+                        help="Show debug messages")
     parser.add_argument("files", nargs="+",
                         help="Files to format")
 
     args = parser.parse_args(remaining_argv)
+
+    # Transform string values into boolean
+    str2bool_dict(defaults, args.__dict__)
+
+    if args.in_place and args.new_file:
+        print(col_red + "Option --in-place and --new-file shouldn't pass togeather.")
+        print(col_green + "Disable --in-place, run only --new-file")
+
+    if isinstance(args.filename, (str)):
+        args.filename = [args.filename]
 
     if args.show_args:
         print(args)
@@ -385,8 +551,13 @@ def _main(args, standard_out, standard_error):
         name = filenames.pop(0)
         if args.recursive and os.path.isdir(name):
             for root, directories, children in os.walk(unicode(name)):
-                filenames += [os.path.join(root, f) for f in children
-                              if f.endswith(".py") and not f.startswith(".")]
+                for f in children:
+                    if f.startswith("."):
+                        continue
+                    for pat in args.filename:
+                        if re.match(pat, os.path.join(root, f), re.DOTALL):
+                            filenames.append(os.path.join(root, f))
+
                 directories[:] = [d for d in directories
                                   if not d.startswith(".")]
         else:

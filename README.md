@@ -12,10 +12,13 @@ $ autopep8_quotes --help
 
 usage: autopep8_quotes [-h] [-f FILE]
                        [-a] [-i] [-d] [-c] [-r]
+                       [--filename FILENAME [FILENAME ...]]
                        [--normalize_string_quotes] [--inline_quotes {',"}] [--multiline_quotes {''',"""}]
                        [--lowercase_string_prefix]
                        [--remove_string_u_prefix]
-                       [--version] [--show_args]
+                       [--version]
+                       [--show_args]
+                       [--debug]
                        files [files ...]
 
 Unify strings to all use the same quote.
@@ -46,6 +49,8 @@ optional arguments:
   -r, --recursive
                         Drill down directories recursively
                         (default: False)
+  --filename FILENAME [FILENAME ...]
+                        Check only for filenames matching the patterns. (default: ['.*\\.py$'])
   --normalize_string_quotes
                         Normalize all quotes to standart by options --multiline_quotes and --inline_quotes
                         (default: True)
@@ -91,7 +96,6 @@ After running::
 this code
 
 ```python
-
     x = "abc"
     y = 'hello'
 ```
@@ -101,3 +105,14 @@ gets formatted into this
     x = "abc"
     y = "hello"
 ```
+
+## Limitations
+
+1. Not all strings could be transformed in right way:
+```python
+# Can't change string
+e_single_double_1 = """ Some \' text. Some \" text. Some \'\'\' text. Some \"\"\" text."""
+```
+2. String checked with ast.literal_eval() which has limitations. Known issues:
+2.1. f-string couldn't be checked perfect, so check without prefix at all.
+3. String with prefix r"" didn't replace escaped quotes.
