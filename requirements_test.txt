@@ -1,0 +1,4 @@
+flake8-quotes
+flake8
+autopep8
+isort

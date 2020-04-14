@@ -1,0 +1,12 @@
+include LICENSE
+include *.rst
+include *.toml
+include *.txt
+include *.yml
+include LICENSE
+include .coveragerc
+include tox.ini
+include requirements.txt
+include requirements_test.txt
+recursive-include autopep8_quotes *.py
+recursive-include tests *.py
