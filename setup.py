@@ -11,6 +11,7 @@ except ImportError:
     # for pip <= 9.0.3
     from pip.req import parse_requirements
 
+
 def load_requirements(fname):
     reqs = parse_requirements(fname, session="autopep8_quotes")
     return [str(ir.req) for ir in reqs]
@@ -27,10 +28,7 @@ def version():
     return None
 
 
-
-
-
-with open("README.rst") as readme:
+with open("README.md") as readme:
     setup(name="autopep8_quotes",
           version=version(),
           description="Modifies strings to all use the same "
@@ -38,9 +36,10 @@ with open("README.rst") as readme:
                       "Unify prefix to lowercase. "
                       "Remove u-prefix. ",
           long_description=readme.read(),
+          long_description_content_type="text/markdown",
           license="Expat License",
-          author="Steven Myint",
-          author_email="author@email",
+          author="Dmitrii",
+          author_email="zoynels@gmailc.com",
           url="https://github.com/myint/autopep8_quotes",
           classifiers=["Intended Audience :: Developers",
                        "Environment :: Console",

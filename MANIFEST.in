@@ -3,6 +3,9 @@ include *.rst
 include *.toml
 include *.txt
 include *.yml
+include *.bat
+include *.yaml
+include Makefile
 include LICENSE
 include .coveragerc
 include tox.ini

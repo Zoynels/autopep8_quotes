@@ -1,9 +1,9 @@
-=====
+===============
 autopep8_quotes
-=====
+===============
 
-.. image:: https://travis-ci.org/myint/autopep8_quotes.svg?branch=master
-    :target: https://travis-ci.org/myint/autopep8_quotes
+.. image:: https://travis-ci.org/zoynels/autopep8_quotes.svg?branch=master
+    :target: https://travis-ci.org/zoynels/autopep8_quotes
     :alt: Build status
 
 Modifies strings to all use the same quote where possible.

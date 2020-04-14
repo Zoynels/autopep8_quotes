@@ -7,8 +7,8 @@ check:
 		--disable=inconsistent-return-statements \
 		--rcfile=/dev/null \
 		autopep8_quotes/autopep8_quotes.py setup.py
-	rstcheck README.rst
-	scspell autopep8_quotes/autopep8_quotes.py setup.py tests/test_unify.py README.rst
+	mdtcheck README.md
+	scspell autopep8_quotes/autopep8_quotes.py setup.py tests/test_unify.py README.md
 
 coverage:
 	@rm -f .coverage
