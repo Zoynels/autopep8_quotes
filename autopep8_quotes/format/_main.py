@@ -1,4 +1,5 @@
 ﻿import io
+import difflib
 from types import SimpleNamespace
 from typing import IO
 from typing import Any
@@ -41,7 +42,6 @@ def format_file(filename: str, args: SimpleNamespace, standard_out: IO[Any]) -> 
                 output_file.write(formatted_source)
 
         if args.diff:
-            import difflib
             diff = difflib.unified_diff(
                 source.splitlines(),
                 formatted_source.splitlines(),
