@@ -6,7 +6,9 @@ from typing import Dict
 from typing import List
 
 from autopep8_quotes import __doc__
+from autopep8_quotes import __title_name__
 from autopep8_quotes import __version__
+from autopep8_quotes._util import load_modules
 from autopep8_quotes.format._colorama import col_green
 from autopep8_quotes.format._colorama import col_red
 
@@ -90,7 +92,7 @@ def agrs_parse(argv: List[Any]) -> Any:  # type Namespace
         # Inherit options from config_parser
         parents=[conf_parser],
         description=__doc__,
-        prog="autopep8_quotes",
+        prog=__title_name__,
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         add_help=True)
     parser.set_defaults(**defaults)
@@ -116,21 +118,6 @@ def agrs_parse(argv: List[Any]) -> Any:  # type Namespace
     parser.add_argument("--filename",
                         type=str, nargs="+",
                         help="Check only for filenames matching the patterns.")
-    parser.add_argument("--normalize-string-quotes", action="store_true",
-                        help="Normalize all quotes to standart "
-                             "by options --multiline-quotes and --inline-quotes")
-    parser.add_argument("--inline-quotes",
-                        help="Preferred inline-quotes. "
-                        "Works only when --normalize-string-quotes is True",
-                        choices=["'", '"'])
-    parser.add_argument("--multiline-quotes",
-                        help="Preferred multiline-quotes. "
-                        "Works only when --normalize-string-quotes is True",
-                        choices=["'''", '"""'])
-    parser.add_argument("--lowercase-string-prefix", action="store_true",
-                        help='Make FURB prefixes lowercase: B"sometext" to b"sometext"')
-    parser.add_argument("--remove-string-u-prefix", action="store_true",
-                        help='Removes any u prefix from the string: u"sometext" to "sometext"')
     parser.add_argument("--version", action="version",
                         version="%(prog)s " + __version__,
                         help="Show program's version number and exit")
@@ -141,12 +128,23 @@ def agrs_parse(argv: List[Any]) -> Any:  # type Namespace
     parser.add_argument("files", nargs="+",
                         help="Files to format")
 
+    # Load all modules from location
+    _modules_dict = load_modules("format", pat=r"($|/|\\)fmt_.*\.py$", ext=".py")
+    for key in _modules_dict:
+        _modules_dict[key].formatter().add_arguments(parser)
+
     args = parser.parse_args(remaining_argv)
+
+    # Add loaded modules
+    args._modules_dict = _modules_dict
 
     # Transform string values into boolean
     str2bool_dict(defaults, args.__dict__)
 
+    args._datetime_start = datetime.datetime.now()
+
     if args.in_place and args.new_file:
+        args.in_place = False
         print(col_red + "Option --in-place and --new-file shouldn't pass togeather.")
         print(col_green + "Disable --in-place, run only --new-file")
 
@@ -157,5 +155,4 @@ def agrs_parse(argv: List[Any]) -> Any:  # type Namespace
         print(args)
         sys.exit(0)
 
-    args.datetime_start = datetime.datetime.now()
     return args

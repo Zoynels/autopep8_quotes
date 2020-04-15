@@ -13,6 +13,7 @@ from typing import Any
 from autopep8_quotes.format._main import format_file
 
 __version__ = "0.6"
+__title_name__ = "autopep8_quotes"
 
 
 def _main(args: Any, standard_out: IO[Any], standard_error: IO[Any]) -> int:

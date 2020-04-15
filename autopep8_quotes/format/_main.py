@@ -11,9 +11,6 @@ from autopep8_quotes._util import open_with_encoding
 from autopep8_quotes.format._colorama import color_diff
 from autopep8_quotes.format._format_util import get_token_dict
 from autopep8_quotes.format._format_util import save_values_to_file
-from autopep8_quotes.format.lowercase_string_prefix import lowercase_string_prefix
-from autopep8_quotes.format.normalize_string_quotes import normalize_string_quotes
-from autopep8_quotes.format.remove_string_u_prefix import remove_string_u_prefix
 
 
 def format_file(filename: str, args: SimpleNamespace, standard_out: IO[Any]) -> bool:
@@ -84,15 +81,14 @@ def _format_code(source: str, args: SimpleNamespace, filename: str) -> Any:
          line) in tokenize.generate_tokens(sio.readline):
         if token_type == tokenize.STRING:
             token_dict = get_token_dict(token_type, token_string, start, end, line, filename)
+
             if args.save_values_to_file:
                 save_list.append(token_dict)
 
-            token_string = normalize_string_quotes(token_string, args=args, token_dict=token_dict)
-            token_string = lowercase_string_prefix(token_string, args=args, token_dict=token_dict)
-            token_string = remove_string_u_prefix(token_string, args=args, token_dict=token_dict)
+            for key in args._modules_dict:
+                token_string = args._modules_dict[key].formatter().parse(token_string, args=args, token_dict=token_dict)
 
-        modified_tokens.append(
-            (token_type, token_string, start, end, line))
+        modified_tokens.append((token_type, token_string, start, end, line))
 
     save_values_to_file(save_list, args, "saved_values")
 

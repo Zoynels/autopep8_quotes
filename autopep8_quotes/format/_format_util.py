@@ -3,6 +3,7 @@ import os
 from typing import Any
 from typing import Dict
 from typing import List
+from typing import Pattern
 from typing import Tuple
 from typing import Union
 
@@ -60,3 +61,17 @@ def isevaluatable(s: str, prefix: str = "") -> Tuple[bool, Any]:
             return True, v
         except BaseException:
             return False, None
+
+
+def sub_twice(regex: Pattern[Any], replacement: str, original: str) -> Any:
+    """Replace `regex` with `replacement` twice on `original`.
+
+    This is used by string normalization to perform replaces on
+    overlapping matches.
+    TODO: If bad replacement, then need to replace by one occurence and then check is it bad or not.
+        If not bad then replacement is good and need to save
+        If bad then skip this change and go to next.
+        https://docs.python.org/3/library/re.html#re.sub
+            count -- all replacements before bad could be fixed. But what to do with next? Split text?
+    """
+    return regex.sub(replacement, regex.sub(replacement, original))

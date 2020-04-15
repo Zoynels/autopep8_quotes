@@ -1,5 +1,11 @@
 ﻿import io
+import os
+import pathlib
+import re
 from typing import Any
+from typing import Dict
+from typing import Pattern
+from typing import Union
 
 
 def open_with_encoding(filename: str, encoding: str, mode: str = "rb") -> Any	:
@@ -25,3 +31,17 @@ def detect_encoding(filename: str) -> str:
         return encoding
     except (SyntaxError, LookupError, UnicodeDecodeError):
         return "latin-1"
+
+
+def load_modules(search_path: str, pat: Union[str, Pattern[Any]], ext: str) -> Dict[str, Any]:
+    """Load reformat modules"""
+    _modules_dict: Dict[str, Any] = {}
+    from autopep8_quotes import __file__ as pkg__file__
+    modules_location = os.path.join(pathlib.Path(pkg__file__).parent, search_path)
+
+    for f in os.listdir(modules_location):
+        if re.match(pat, f, re.DOTALL):
+            modulename: str = str(os.path.join(search_path, f)[:-len(ext)])
+            modulename = modulename.replace("/", ".").replace("\\", ".").replace("..", ".")
+            _modules_dict[modulename] = __import__(modulename, globals(), level=1, fromlist=[""])
+    return _modules_dict
