@@ -13,6 +13,7 @@ build
 _build
 dist
 tmp
+log
 *.egg-info
 .idea
 .eggs
