@@ -35,6 +35,7 @@ import os
 import re
 import signal
 import sys
+import datetime
 
 import tokenize
 import untokenize  # type: ignore
@@ -112,6 +113,7 @@ def _format_code(source, args, filename):
     modified_tokens = []
 
     sio = io.StringIO(source)
+    save_list = []
     for (token_type,
          token_string,
          start,
@@ -119,6 +121,9 @@ def _format_code(source, args, filename):
          line) in tokenize.generate_tokens(sio.readline):
         if token_type == tokenize.STRING:
             token_dict = get_token_dict(token_type, token_string, start, end, line, filename)
+            if args.save_values_to_file:
+                save_list.append(token_dict)
+
             token_string = normalize_string_quotes(token_string, args=args, token_dict=token_dict)
             token_string = lowercase_string_prefix(token_string, args=args, token_dict=token_dict)
             token_string = remove_string_u_prefix(token_string, args=args, token_dict=token_dict)
@@ -126,7 +131,28 @@ def _format_code(source, args, filename):
         modified_tokens.append(
             (token_type, token_string, start, end, line))
 
+    save_values_to_file(save_list, args, "saved_values")
+
+
     return untokenize.untokenize(modified_tokens)
+
+
+def save_values_to_file(input_list, args, name):
+    if args.save_values_to_file:
+        os.makedirs("log", exist_ok=True)
+        fname = f"log/autopep8_quotes.{name}.{args.datetime_start.strftime('%Y%d%m %H%M%S')}.txt"
+        if input_list:
+            print(f"Write strings to {fname} from file " + input_list[0]["filename"])
+        with open_with_encoding(fname, mode="a", encoding="utf-8") as output_file:
+            for i, token_dict in enumerate(input_list):
+                try:
+                    output_file.write("\n")
+                    output_file.write("# " + token_dict["filename"] + ":" + token_dict["pos1"])
+                    output_file.write("\n")
+                    output_file.write(f"a_{i+1} = " + token_dict["token_string"])
+                    output_file.write("\n")
+                except:
+                    pass
 
 
 def get_token_dict(token_type, token_string, start, end, line, filename):
@@ -139,6 +165,7 @@ def get_token_dict(token_type, token_string, start, end, line, filename):
     _dict["filename"] = filename
     _dict["text"] = f"Line {start[0]}, pos {start[1]} - line {end[0]}, pos {end[1]}: {token_string}"
     _dict["pos"] = f"Line:pos ({start[0]}:{start[1]} - {end[0]}:{end[1]})"
+    _dict["pos1"] = f"({start[0]}:{start[1]} - {end[0]}:{end[1]})"
     _dict["pos2"] = f"Line {start[0]}, pos {start[1]} - line {end[0]}, pos {end[1]}"
 
     return _dict
@@ -177,18 +204,19 @@ def remove_string_u_prefix(leaf, args, token_dict):
 
 
 class quotes_codes(Enum):
-    quote_bruteforce_good = -3
-    old_quote_good = -2
-    new_quote_good = -1
-    original_equal = 0
-    original_bad = 1
-    cant_transform = 2
-    quote_start_is_not_equal_end_v1 = 11
-    quote_start_is_not_equal_end_v2 = 12
-    unescaped_quote_in_r = 13
-    backslashes_in_expressions = 14
-    do_not_introduce_more_escaping = 15
-    prefer_double_quotes = 16
+    changed__quote_bruteforce = -3
+    changed__old_quote = -2
+    changed__new_quote = -1
+    original__equal = 1
+    original__bad_value = 2
+    original__cant_transform = 3
+    original__quote_start_is_not_equal_end_v1 = 11
+    original__quote_start_is_not_equal_end_v2 = 12
+    original__unescaped_quote_in_r_prefix = 13
+    original__backslashes_in_expressions = 14
+    original__do_not_introduce_more_escaping = 15
+    original__prefer_double_quotes = 16
+    original__empty = 17
 
 
 def normalize_string_quotes(leaf, args, token_dict):
@@ -210,7 +238,7 @@ def normalize_string_quotes(leaf, args, token_dict):
         quotes["'"] = '"'
         quotes['"'] = "'"
 
-        if value[:3] == value[-3:]:
+        if (value[:3] == value[-3:]) and len(value) >= 6:
             if value[:3] == args.multiline_quotes:
                 orig_quote = args.multiline_quotes
                 if change_quote:
@@ -228,11 +256,11 @@ def normalize_string_quotes(leaf, args, token_dict):
                 orig_quote = quotes[args.inline_quotes]
                 new_quote = args.inline_quotes
         else:
-            return leaf, quotes_codes.quote_start_is_not_equal_end_v1
+            return leaf, quotes_codes.original__quote_start_is_not_equal_end_v1
 
         first_quote_pos = leaf.find(orig_quote)
         if first_quote_pos == -1:
-            return leaf, quotes_codes.quote_start_is_not_equal_end_v2
+            return leaf, quotes_codes.original__quote_start_is_not_equal_end_v2
 
         prefix = leaf[:first_quote_pos]
         unescaped_new_quote = re.compile(rf"(([^\\]|^)(\\\\)*){new_quote}")
@@ -248,7 +276,7 @@ def normalize_string_quotes(leaf, args, token_dict):
             if unescaped_new_quote.search(body):
                 # There's at least one unescaped new_quote in this raw string
                 # so converting is impossible
-                return leaf, quotes_codes.unescaped_quote_in_r
+                return leaf, quotes_codes.original__unescaped_quote_in_r_prefix
 
             # Do not introduce or remove backslashes in raw strings
             new_body = body
@@ -277,7 +305,7 @@ def normalize_string_quotes(leaf, args, token_dict):
             for m in matches:
                 if "\\" in str(m):
                     # Do not introduce backslashes in interpolated expressions
-                    return leaf, quotes_codes.backslashes_in_expressions
+                    return leaf, quotes_codes.original__backslashes_in_expressions
 
         if len(new_quote) == 3 and new_body[-1:] == new_quote[0]:
             # edge case:
@@ -285,20 +313,19 @@ def normalize_string_quotes(leaf, args, token_dict):
         orig_escape_count = body.count("\\")
         new_escape_count = new_body.count("\\")
         if new_escape_count > orig_escape_count:
-            return leaf, quotes_codes.do_not_introduce_more_escaping
+            return leaf, quotes_codes.original__do_not_introduce_more_escaping
 
         if new_escape_count == orig_escape_count and orig_quote == args.inline_quotes:
-            return leaf, quotes_codes.prefer_double_quotes
+            return leaf, quotes_codes.original__prefer_double_quotes
 
         return check_string(leaf, prefix, old_body, new_body, orig_quote, new_quote, args=args, token_dict=token_dict)
 
     if args.normalize_string_quotes:
         result_string, code = parse(leaf, args=args)
-        if code == quotes_codes.quote_bruteforce_good:
+        if code == quotes_codes.changed__quote_bruteforce:
             # Try to change quote """ => ''' and vice versa
             result_string_v2, code_v2 = parse(leaf, args=args, change_quote=True)
-            if (code_v2 != quotes_codes.cant_transform) and (code_v2 != quotes_codes.quote_bruteforce_good):
-                # If
+            if code_v2 in [quotes_codes.changed__old_quote, quotes_codes.changed__new_quote]:
                 result_string, code = result_string_v2, code_v2
 
         if args.debug:
@@ -371,7 +398,7 @@ def check_string(original, prefix, old_body, new_body, orig_quote, new_quote, ar
     v1 = f"{prefix}{new_quote}{new_body}{new_quote}"
     v2 = f"{prefix}{orig_quote}{new_body}{orig_quote}"
     if original == v1:
-        return original, quotes_codes.original_equal
+        return original, quotes_codes.original__equal
 
     v0_res = isevaluatable(original, prefix)
     if not v0_res[0]:
@@ -381,7 +408,8 @@ def check_string(original, prefix, old_body, new_body, orig_quote, new_quote, ar
         print("    " + col_red + f"Position:   {token_dict['pos']}")
         print("    " + col_red + f"String:     {token_dict['token_string']}")
         print("")
-        return original, quotes_codes.original_bad
+        save_values_to_file([token_dict], args, "original__bad_values")
+        return original, quotes_codes.original__bad_value
 
     v1_res = isevaluatable(v1, prefix)
     # Good string and value is not changed!
@@ -390,21 +418,21 @@ def check_string(original, prefix, old_body, new_body, orig_quote, new_quote, ar
             print("#" * 100)
             print(args.debug)
             print(col_red + f"Return v1: {v1}")
-        return v1, quotes_codes.new_quote_good
+        return v1, quotes_codes.changed__new_quote
 
     v2_res = isevaluatable(v2, prefix)
     # Good string and value is not changed!
     if v2_res[0] and (v2_res[1] == v0_res[1]):
         if args.debug:
             print(col_red + f"Return v2: {v2}")
-        return v2, quotes_codes.old_quote_good
+        return v2, quotes_codes.changed__old_quote
 
     v3 = get_rep_body(new_body, prefix, new_quote)
     v3_res = isevaluatable(v3, prefix)
     if v3_res[0] and (v3_res[1] == v0_res[1]):
         if args.debug:
             print(col_red + f"Return v3: {v3}")
-        return v3, quotes_codes.quote_bruteforce_good
+        return v3, quotes_codes.changed__quote_bruteforce
 
     print("")
     print(col_red + f"Can't transform, return original! Please simpify string manually!")
@@ -415,7 +443,9 @@ def check_string(original, prefix, old_body, new_body, orig_quote, new_quote, ar
     print("        " + col_red + f"Try v1:     {v1}")
     print("        " + col_red + f"Try v2:     {v2}")
     print("")
-    return original, quotes_codes.cant_transform
+    save_values_to_file([token_dict], args, "error_values")
+
+    return original, quotes_codes.original__cant_transform
 
 
 def open_with_encoding(filename, encoding, mode="rb"):
@@ -529,6 +559,7 @@ def _main(args, standard_out, standard_error):
     defaults["diff"] = False
     defaults["in_place"] = False
     defaults["new_file"] = False
+    defaults["save_values_to_file"] = False
     defaults["recursive"] = False
     defaults["normalize_string_quotes"] = True
     defaults["inline_quotes"] = '"'
@@ -584,13 +615,14 @@ def _main(args, standard_out, standard_error):
     parser.add_argument("-d", "--diff", action="store_true",
                         help="Print changes without make changes. "
                         "Could be combined with --in-place")
+    parser.add_argument("-s", "--save_values_to_file", action="store_true",
+                        help="Save all strings into file.")
     parser.add_argument("-c", "--check-only", action="store_true",
                         help="Exit with a status code of 1 if any changes are still needed")
     parser.add_argument("-r", "--recursive", action="store_true",
                         help="Drill down directories recursively")
     parser.add_argument("--filename",
-                        type=str,
-                        nargs="+",
+                        type=str, nargs="+",
                         help="Check only for filenames matching the patterns.")
     parser.add_argument("--normalize_string_quotes", action="store_true",
                         help="Normalize all quotes to standart "
@@ -632,6 +664,8 @@ def _main(args, standard_out, standard_error):
     if args.show_args:
         print(args)
         sys.exit(0)
+
+    args.datetime_start = datetime.datetime.now()
 
     filenames = list(set(args.files))
     changes_needed = False
