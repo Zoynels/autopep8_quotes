@@ -19,8 +19,8 @@ class quotes_codes(Enum):
     original__equal = 1
     original__bad_value = 2
     original__cant_transform = 3
-    original__quote_start_is_not_equal_end_v1 = 11
-    original__quote_start_is_not_equal_end_v2 = 12
+    original__cant_detect_quote_type = 11
+    original__cant_find_first_quote = 12
     original__unescaped_quote_in_r_prefix = 13
     original__backslashes_in_expressions = 14
     original__do_not_introduce_more_escaping = 15
@@ -56,7 +56,7 @@ class formatter(main_formatter):
             if result > 0 then error else no error but may be warning
         """
         def parse(leaf: str, args: SimpleNamespace, change_quote: bool = False) -> Tuple[str, quotes_codes]:
-            value = leaf.lstrip("furbFURB")
+            body_quoted = leaf.lstrip("furbFURB")
 
             quotes = {}
             quotes["'''"] = '"""'
@@ -64,8 +64,8 @@ class formatter(main_formatter):
             quotes["'"] = '"'
             quotes['"'] = "'"
 
-            if (value[:3] == value[-3:]) and len(value) >= 6:
-                if value[:3] == args.multiline_quotes:
+            if (body_quoted[:3] == body_quoted[-3:]) and len(body_quoted) >= 6:
+                if body_quoted[:3] == args.multiline_quotes:
                     orig_quote = args.multiline_quotes
                     if change_quote:
                         new_quote = quotes[args.multiline_quotes]
@@ -74,19 +74,19 @@ class formatter(main_formatter):
                 else:
                     orig_quote = quotes[args.multiline_quotes]
                     new_quote = args.multiline_quotes
-            elif value[:1] == value[-1:]:
-                if value[0] == args.inline_quotes:
+            elif body_quoted[:1] == body_quoted[-1:]:
+                if body_quoted[0] == args.inline_quotes:
                     orig_quote = args.inline_quotes
                     new_quote = quotes[args.inline_quotes]
                 else:
                     orig_quote = quotes[args.inline_quotes]
                     new_quote = args.inline_quotes
             else:
-                return leaf, quotes_codes.original__quote_start_is_not_equal_end_v1
+                return leaf, quotes_codes.original__cant_detect_quote_type
 
             first_quote_pos = leaf.find(orig_quote)
             if first_quote_pos == -1:
-                return leaf, quotes_codes.original__quote_start_is_not_equal_end_v2
+                return leaf, quotes_codes.original__cant_find_first_quote
 
             prefix = leaf[:first_quote_pos]
             unescaped_new_quote = re.compile(rf"(([^\\]|^)(\\\\)*){new_quote}")
@@ -97,7 +97,9 @@ class formatter(main_formatter):
             escaped_quote_single_el_v2 = re.compile(rf"([^\\]|^)\\((?:\\\\)*){quotes[new_quote[0]][0]}")
 
             body = leaf[first_quote_pos + len(orig_quote): -len(orig_quote)]
+            # Save body for future checks
             old_body = body
+
             if "r" in prefix.casefold():
                 if unescaped_new_quote.search(body):
                     # There's at least one unescaped new_quote in this raw string
@@ -115,9 +117,10 @@ class formatter(main_formatter):
 
                 if body != new_body:
                     # Consider the string without unnecessary escapes as the original
-                    return check_string(leaf, prefix, old_body, new_body, orig_quote, new_quote, args=args, token_dict=token_dict)
+                    return self.check_string(leaf, prefix, old_body, new_body, orig_quote, new_quote, args=args, token_dict=token_dict)
                 new_body = sub_twice(escaped_orig_quote, rf"\1\2{orig_quote}", new_body)
                 new_body = sub_twice(unescaped_new_quote, rf"\1\\{new_quote}", new_body)
+
             if "f" in prefix.casefold():
                 matches = re.findall(
                     r"""
@@ -144,7 +147,7 @@ class formatter(main_formatter):
             if new_escape_count == orig_escape_count and orig_quote == args.inline_quotes:
                 return leaf, quotes_codes.original__prefer_double_quotes
 
-            return check_string(leaf, prefix, old_body, new_body, orig_quote, new_quote, args=args, token_dict=token_dict)
+            return self.check_string(leaf, prefix, old_body, new_body, orig_quote, new_quote, args=args, token_dict=token_dict)
 
         if args.normalize_string_quotes:
             result_string, code = parse(leaf, args=args)
@@ -164,98 +167,111 @@ class formatter(main_formatter):
                 return result_string
         return leaf
 
-
-def get_rep_body(body: str, prefix: str, quote: str) -> str:
-    """Escape symbol by symbol to get new_body"""
-    new_body = ""
-    delim = "\\"
-    space = " "
-    L = len(body)
-    for i, char in enumerate(body):
-        last_line = (i == L - 1)
-        # Standart line
-        # ast.literal_eval: if last symbol is quote[0] then it should be escaped
-        if (body[i] != quote[0]) or (not last_line):
-            v10 = f"{prefix}{quote}{new_body + body[i]}{quote}"
-            v10_res = isevaluatable(v10)
-            if v10_res[0]:
-                new_body = new_body + body[i]
-                # print(i , L - 1, "V10", new_body)
-                continue
-
-        if not last_line:
-            # All symbols instead of last symbol which should be escaped
+    def bruteforce_body(self, body: str, prefix: str, quote: str) -> str:
+        """Escape symbol by symbol to get new_body"""
+        new_body = ""
+        delim = "\\"
+        space = " "
+        L = len(body)
+        for i, char in enumerate(body):
+            last_line = (i == L - 1)
+            # Standart line
             # ast.literal_eval: if last symbol is quote[0] then it should be escaped
-            # but that it it not last sybmol of body then check if it not a last
-            v11 = f"{prefix}{quote}{new_body + body[i] + space}{quote}"
-            v11_res = isevaluatable(v11)
-            if v11_res[0]:
-                new_body = new_body + body[i]
-                # print(i , L - 1, "	V11", new_body)
+            if (body[i] != quote[0]) or (not last_line):
+                v10 = f"{prefix}{quote}{new_body + body[i]}{quote}"
+                v10_res = isevaluatable(v10)
+                if v10_res[0]:
+                    new_body = new_body + body[i]
+                    continue
+
+            if not last_line:
+                # All symbols instead of last symbol which should be escaped
+                # ast.literal_eval: if last symbol is quote[0] then it should be escaped
+                # but that it it not last sybmol of body then check if it not a last
+                v11 = f"{prefix}{quote}{new_body + body[i] + space}{quote}"
+                v11_res = isevaluatable(v11)
+                if v11_res[0]:
+                    new_body = new_body + body[i]
+                    continue
+
+            # Escaped symbol
+            v20 = f"{prefix}{quote}{new_body+delim+body[i]}{quote}"
+            v20_res = isevaluatable(v20)
+            if v20_res[0]:
+                new_body = new_body + delim + body[i]
                 continue
 
-        # Escaped symbol
-        v20 = f"{prefix}{quote}{new_body+delim+body[i]}{quote}"
-        v20_res = isevaluatable(v20)
-        if v20_res[0]:
-            new_body = new_body + delim + body[i]
-            # print(i , L - 1, "		V20", new_body)
-            continue
+        # Result line. It could be not normal
+        return f"{prefix}{quote}{new_body}{quote}"
 
-    # Result line. It could be not normal
-    return f"{prefix}{quote}{new_body}{quote}"
+    def check_string(self,
+                     original: str,
+                     prefix: str,
+                     old_body: str,
+                     new_body: str,
+                     orig_quote: str,
+                     new_quote: str,
+                     args: SimpleNamespace,
+                     token_dict: Dict[str, Any]
+                     ) -> Tuple[str, quotes_codes]:
 
+        v1 = f"{prefix}{new_quote}{new_body}{new_quote}"
+        v2 = f"{prefix}{orig_quote}{new_body}{orig_quote}"
+        if original == v1:
+            return original, quotes_codes.original__equal
 
-def check_string(original: str, prefix: str, old_body: str, new_body: str, orig_quote: str, new_quote: str,
-                 args: SimpleNamespace, token_dict: Dict[str, Any]) -> Tuple[str, quotes_codes]:
-    v1 = f"{prefix}{new_quote}{new_body}{new_quote}"
-    v2 = f"{prefix}{orig_quote}{new_body}{orig_quote}"
-    if original == v1:
-        return original, quotes_codes.original__equal
+        v0_res = isevaluatable(original, prefix)
+        if not v0_res[0]:
+            print("")
+            print(col_red + f"Can't check original! Please test string manually!")
+            print("    " + col_red + f"Filename:   {token_dict['filename']}")
+            print("    " + col_red + f"Position:   {token_dict['pos']}")
+            print("    " + col_red + f"String:     {token_dict['token_string']}")
+            print("")
+            save_values_to_file([token_dict], args, "original__bad_values")
+            return original, quotes_codes.original__bad_value
 
-    v0_res = isevaluatable(original, prefix)
-    if not v0_res[0]:
+        v1_res = isevaluatable(v1, prefix)
+        # Good string and value is not changed!
+        if v1_res[0] and (v1_res[1] == v0_res[1]):
+            if args.debug:
+                print("#" * 100)
+                print(args.debug)
+                print(col_red + f"Return v1: {v1}")
+            return v1, quotes_codes.changed__new_quote
+
+        v2_res = isevaluatable(v2, prefix)
+        # Good string and value is not changed!
+        if v2_res[0] and (v2_res[1] == v0_res[1]):
+            if args.debug:
+                print(col_red + f"Return v2: {v2}")
+            return v2, quotes_codes.changed__old_quote
+
+        v3 = self.bruteforce_body(new_body, prefix, new_quote)
+        v3_res = isevaluatable(v3, prefix)
+        if v3_res[0] and (v3_res[1] == v0_res[1]):
+            if args.debug:
+                print(col_red + f"Return v3: {v3}")
+            return v3, quotes_codes.changed__quote_bruteforce
+
+        return self.check_string__cant_transform(original, v1, v2, args, token_dict)
+
+    def check_string__cant_transform(self,
+                                     original: str,
+                                     v1: str,
+                                     v2: str,
+                                     args: SimpleNamespace,
+                                     token_dict: Dict[str, Any]
+                                     ) -> Tuple[str, quotes_codes]:
         print("")
-        print(col_red + f"Can't check original! Please test string manually!")
+        print(col_red + f"Can't transform, return original! Please simpify string manually!")
         print("    " + col_red + f"Filename:   {token_dict['filename']}")
         print("    " + col_red + f"Position:   {token_dict['pos']}")
         print("    " + col_red + f"String:     {token_dict['token_string']}")
+        print("        " + col_red + f"Original:   {original}")
+        print("        " + col_red + f"Try v1:     {v1}")
+        print("        " + col_red + f"Try v2:     {v2}")
         print("")
-        save_values_to_file([token_dict], args, "original__bad_values")
-        return original, quotes_codes.original__bad_value
+        save_values_to_file([token_dict], args, "error_values")
 
-    v1_res = isevaluatable(v1, prefix)
-    # Good string and value is not changed!
-    if v1_res[0] and (v1_res[1] == v0_res[1]):
-        if args.debug:
-            print("#" * 100)
-            print(args.debug)
-            print(col_red + f"Return v1: {v1}")
-        return v1, quotes_codes.changed__new_quote
-
-    v2_res = isevaluatable(v2, prefix)
-    # Good string and value is not changed!
-    if v2_res[0] and (v2_res[1] == v0_res[1]):
-        if args.debug:
-            print(col_red + f"Return v2: {v2}")
-        return v2, quotes_codes.changed__old_quote
-
-    v3 = get_rep_body(new_body, prefix, new_quote)
-    v3_res = isevaluatable(v3, prefix)
-    if v3_res[0] and (v3_res[1] == v0_res[1]):
-        if args.debug:
-            print(col_red + f"Return v3: {v3}")
-        return v3, quotes_codes.changed__quote_bruteforce
-
-    print("")
-    print(col_red + f"Can't transform, return original! Please simpify string manually!")
-    print("    " + col_red + f"Filename:   {token_dict['filename']}")
-    print("    " + col_red + f"Position:   {token_dict['pos']}")
-    print("    " + col_red + f"String:     {token_dict['token_string']}")
-    print("        " + col_red + f"Original:   {original}")
-    print("        " + col_red + f"Try v1:     {v1}")
-    print("        " + col_red + f"Try v2:     {v2}")
-    print("")
-    save_values_to_file([token_dict], args, "error_values")
-
-    return original, quotes_codes.original__cant_transform
+        return original, quotes_codes.original__cant_transform
