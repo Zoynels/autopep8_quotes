@@ -1,59 +1,59 @@
 ﻿import io
-import difflib
 from types import SimpleNamespace
-from typing import IO
 from typing import Any
+from typing import List
 
 import tokenize
 import untokenize  # type: ignore
 
 from autopep8_quotes._util import detect_encoding
 from autopep8_quotes._util import open_with_encoding
-from autopep8_quotes.format._colorama import color_diff
 from autopep8_quotes.format._format_util import get_token_dict
 from autopep8_quotes.format._format_util import save_values_to_file
 
 
-def format_file(filename: str, args: SimpleNamespace, standard_out: IO[Any]) -> bool:
+def format_file(args: SimpleNamespace) -> Any:
     """Run format_code() on a file.
 
     Returns `True` if any changes are needed and they are not being done
     in-place.
 
     """
-    encoding = detect_encoding(filename)
-    with open_with_encoding(filename, encoding=encoding, mode="rb") as input_file:
+    args._read_encoding = detect_encoding(args._read_filename)
+    with open_with_encoding(args._read_filename, encoding=args._read_encoding, mode="rb") as input_file:
         source = input_file.read()
-        source = source.decode(encoding)
+        source = source.decode(args._read_encoding)
         formatted_source = format_code(
             source,
             args=args,
-            filename=filename)
+            filename=args._read_filename)
 
     if source != formatted_source:
-        if args.in_place:
-            with open_with_encoding(filename, mode="w",
-                                    encoding=encoding) as output_file:
-                output_file.write(formatted_source)
-        elif args.new_file:
-            with open_with_encoding(filename + ".autopep8_quotes",
-                                    mode="w",
-                                    encoding=encoding) as output_file:
-                output_file.write(formatted_source)
+        result: List[Any] = [True]
+        for key in args._start_save_order:
+            if key not in args._modules_dict:
+                continue
+            func = args._modules_dict[key].formatter().show_or_save
+            res = func(args=args, source=source, formatted_source=formatted_source)
+            if res is None:
+                pass
+            elif isinstance(res, list):
+                if res[0].lower() == "return":
+                    if len(res[1:]) == 1:
+                        result.append(res[1])
+                    else:
+                        result.append(res[1:])
+                if res[0].lower() == "immediately return":
+                    if len(res[1:]) == 1:
+                        return res[1]
+                    else:
+                        return res[1:]
+            elif isinstance(res, str):
+                if res.lower() == "continue":
+                    continue
 
-        if args.diff:
-            diff = difflib.unified_diff(
-                source.splitlines(),
-                formatted_source.splitlines(),
-                "before/" + filename,
-                "after/" + filename,
-                lineterm="")
-
-            standard_out.write("\n".join(list(color_diff(diff)) + [""]))
-
-        if args.in_place or args.new_file or args.diff:
+        if all(result):
             return True
-
     return False
 
 
@@ -85,8 +85,11 @@ def _format_code(source: str, args: SimpleNamespace, filename: str) -> Any:
             if args.save_values_to_file:
                 save_list.append(token_dict)
 
-            for key in args._modules_dict:
-                token_string = args._modules_dict[key].formatter().parse(token_string, args=args, token_dict=token_dict)
+            for key in args._start_parse_order:
+                if key not in args._modules_dict:
+                    continue
+                func = args._modules_dict[key].formatter().parse
+                token_string = func(token_string, args=args, token_dict=token_dict)
 
         modified_tokens.append((token_type, token_string, start, end, line))
 

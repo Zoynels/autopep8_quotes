@@ -7,22 +7,25 @@ import os
 import re
 import signal
 import sys
-from typing import IO
 from typing import Any
 
+from autopep8_quotes._util import return__stdout_err
 from autopep8_quotes.format._main import format_file as __base_function__
 
 __version__ = "0.6"
 __title_name__ = "autopep8_quotes"
 
 
-def _main(args: Any, standard_out: IO[Any], standard_error: IO[Any]) -> int:
+def _main(args: Any, standard_out: Any, standard_error: Any) -> int:
     """Run function on files.
 
     Returns `1` if any changes are still needed, otherwise 0"""
 
     from . args import agrs_parse
     args = agrs_parse(args)
+
+    args._standard_out = standard_out
+    args._standard_error = standard_error
 
     filenames = list(set(args.files))
     changes_needed = False
@@ -41,10 +44,11 @@ def _main(args: Any, standard_out: IO[Any], standard_error: IO[Any]) -> int:
                 directories[:] = [d for d in directories if not d.startswith(".")]
         else:
             try:
-                if __base_function__(name, args=args, standard_out=standard_out):
+                args._read_filename = name
+                if __base_function__(args=args):
                     changes_needed = True
             except IOError as exception:
-                print(exception, file=standard_error)
+                print(exception, file=return__stdout_err(args._standard_error))
                 failure = True
 
     if failure or (args.check_only and changes_needed):
@@ -63,8 +67,8 @@ def main() -> int:  # pragma: no cover
 
     try:
         return _main(sys.argv,
-                     standard_out=sys.stdout,
-                     standard_error=sys.stderr)
+                     standard_out="sys.stdout",
+                     standard_error="sys.stderr")
     except KeyboardInterrupt:
         return 2
 

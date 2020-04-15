@@ -32,7 +32,7 @@ class formatter(main_formatter):
     def __init__(self) -> None:
         pass
 
-    def add_arguments(self, parser: Any) -> None:
+    def add_arguments(self, parser: Any, **kwargs: Any) -> None:
         parser.add_argument("--normalize-string-quotes", action="store_true",
                             help="Normalize all quotes to standart "
                                  "by options --multiline-quotes and --inline-quotes")
@@ -44,6 +44,11 @@ class formatter(main_formatter):
                             help="Preferred multiline-quotes. "
                             "Works only when --normalize-string-quotes is True",
                             choices=["'''", '"""'])
+
+    def default_arguments(self, defaults: Dict[str, Any], **kwargs: Any) -> None:
+        defaults["normalize_string_quotes"] = True
+        defaults["inline_quotes"] = '"'
+        defaults["multiline_quotes"] = '"""'
 
     def parse(self, leaf: str, args: SimpleNamespace, token_dict: Dict[str, Any]) -> str:
         """Prefer quotes but only if it doesn't cause more escaping.

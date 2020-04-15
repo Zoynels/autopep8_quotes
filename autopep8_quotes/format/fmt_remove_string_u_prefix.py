@@ -10,9 +10,12 @@ class formatter(main_formatter):
     def __init__(self) -> None:
         pass
 
-    def add_arguments(self, parser: Any) -> None:
+    def add_arguments(self, parser: Any, **kwargs: Any) -> None:
         parser.add_argument("--remove-string-u-prefix", action="store_true",
                             help='Removes any u prefix from the string: u"sometext" to "sometext"')
+
+    def default_arguments(self, defaults: Dict[str, Any], **kwargs: Any) -> None:
+        defaults["remove_string_u_prefix"] = True
 
     def parse(self, leaf: str, args: SimpleNamespace, token_dict: Dict[str, Any]) -> str:
         """Removes any u prefix from the string.

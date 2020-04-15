@@ -10,9 +10,12 @@ class formatter(main_formatter):
     def __init__(self) -> None:
         pass
 
-    def add_arguments(self, parser: Any) -> None:
+    def add_arguments(self, parser: Any, **kwargs: Any) -> None:
         parser.add_argument("--lowercase-string-prefix", action="store_true",
                             help='Make FURB prefixes lowercase: B"sometext" to b"sometext"')
+
+    def default_arguments(self, defaults: Dict[str, Any], **kwargs: Any) -> None:
+        defaults["lowercase_string_prefix"] = True
 
     def parse(self, leaf: str, args: SimpleNamespace, token_dict: Dict[str, Any]) -> str:
         """Make furbFURB prefixes lowercase.
