@@ -50,4 +50,5 @@ with open("README.md") as readme:
               "console_scripts": ["autopep8_quotes = autopep8_quotes.__init__:main"]},
           packages=["autopep8_quotes"],
           package_dir={"autopep8_quotes": "autopep8_quotes"},
+          include_package_data=True,
           install_requires=load_requirements("requirements.txt"))

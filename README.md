@@ -13,11 +13,11 @@ $ autopep8_quotes --help
 usage: autopep8_quotes [-h] [-f FILE]
                        [-a] [-i] [-d] [-c] [-r]
                        [--filename FILENAME [FILENAME ...]]
-                       [--normalize_string_quotes] [--inline_quotes {',"}] [--multiline_quotes {''',"""}]
-                       [--lowercase_string_prefix]
-                       [--remove_string_u_prefix]
+                       [--normalize-string-quotes] [--inline-quotes {',"}] [--multiline-quotes {''',"""}]
+                       [--lowercase-string-prefix]
+                       [--remove-string-u-prefix]
                        [--version]
-                       [--show_args]
+                       [--show-args]
                        [--debug]
                        files [files ...]
 
@@ -32,10 +32,10 @@ positional arguments:
 optional arguments:
   -h, --help
                         Show this help message and exit
-  -f FILE, --conf_file FILE
+  -f FILE, --config-file FILE
                         Specify config file
                         (default: None)
-  -a, --autodetect_conf
+  -a, --autodetect-conf
                         Try to detect config file: *.ini, *.cfg
                         (default: True)
   -i, --in-place
@@ -60,24 +60,24 @@ optional arguments:
                         (default: False)
   --filename FILENAME [FILENAME ...]
                         Check only for filenames matching the patterns. (default: ['.*\\.py$'])
-  --normalize_string_quotes
-                        Normalize all quotes to standart by options --multiline_quotes and --inline_quotes
+  --normalize-string-quotes
+                        Normalize all quotes to standart by options --multiline-quotes and --inline-quotes
                         (default: True)
-  --inline_quotes {',"}
-                        Preferred inline_quotes. Works only when --normalize_string_quotes is True
+  --inline-quotes {',"}
+                        Preferred inline-quotes. Works only when --normalize-string-quotes is True
                         (default: ")
-  --multiline_quotes {''',"""}
-                        Preferred multiline_quotes. Works only when --normalize_string_quotes is True
+  --multiline-quotes {''',"""}
+                        Preferred multiline-quotes. Works only when --normalize-string-quotes is True
                         (default: """)
-  --lowercase_string_prefix
+  --lowercase-string-prefix
                         Make FURB prefixes lowercase: B"sometext" to b"sometext"
                         (default: True)
-  --remove_string_u_prefix
+  --remove-string-u-prefix
                         Removes any u prefix from the string: u"sometext" to "sometext"
                         (default: True)
   --version
                         Show program's version number and exit
-  --show_args
+  --show-args
                         Show readed args for script and exit
                         (default: False)
 ```
@@ -86,9 +86,9 @@ optional arguments:
 
 Options could be set by several ways (with this order if one option exist several times):
 
-    1. Load all config files founded by sorted(os.listdir()) when --autodetect_conf is enabled
+    1. Load all config files founded by sorted(os.listdir()) when --autodetect-conf is enabled
         Find all *.ini or *.cfg files and read them by ConfigParser
-    2. Load --conf_file file
+    2. Load --config-file file
     3. Options from command-line
 
 In config files options could be stored in several sections (with this order if one option exist several times):
