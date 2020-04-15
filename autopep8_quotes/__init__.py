@@ -10,16 +10,16 @@ import sys
 from typing import IO
 from typing import Any
 
-from autopep8_quotes.format._main import format_file
+from autopep8_quotes.format._main import format_file as __base_function__
 
 __version__ = "0.6"
 __title_name__ = "autopep8_quotes"
 
 
 def _main(args: Any, standard_out: IO[Any], standard_error: IO[Any]) -> int:
-    """Run quotes autopep8_quotesing on files.
+    """Run function on files.
 
-    Returns `1` if any quoting changes are still needed, otherwise 0"""
+    Returns `1` if any changes are still needed, otherwise 0"""
 
     from . args import agrs_parse
     args = agrs_parse(args)
@@ -41,7 +41,7 @@ def _main(args: Any, standard_out: IO[Any], standard_error: IO[Any]) -> int:
                 directories[:] = [d for d in directories if not d.startswith(".")]
         else:
             try:
-                if format_file(name, args=args, standard_out=standard_out):
+                if __base_function__(name, args=args, standard_out=standard_out):
                     changes_needed = True
             except IOError as exception:
                 print(exception, file=standard_error)
