@@ -3,13 +3,10 @@ from types import SimpleNamespace
 from typing import Any
 from typing import Dict
 
-from autopep8_quotes.format._fmt_cls import main_formatter
+from autopep8_quotes._util._modules import main_formatter
 
 
 class formatter(main_formatter):
-    def __init__(self) -> None:
-        pass
-
     def add_arguments(self, parser: Any, **kwargs: Any) -> None:
         parser.add_argument("--lowercase-string-prefix", action="store_true",
                             help='Make FURB prefixes lowercase: B"sometext" to b"sometext"')

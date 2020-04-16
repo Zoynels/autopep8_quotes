@@ -5,11 +5,10 @@ from typing import Any
 from typing import Dict
 from typing import Tuple
 
-from autopep8_quotes.format._colorama import col_red
-from autopep8_quotes.format._fmt_cls import main_formatter
-from autopep8_quotes.format._format_util import isevaluatable
-from autopep8_quotes.format._format_util import save_values_to_file
-from autopep8_quotes.format._format_util import sub_twice
+from autopep8_quotes._util._format import isevaluatable
+from autopep8_quotes._util._format import save_values_to_file
+from autopep8_quotes._util._format import sub_twice
+from autopep8_quotes._util._modules import main_formatter
 
 
 class quotes_codes(Enum):
@@ -29,9 +28,6 @@ class quotes_codes(Enum):
 
 
 class formatter(main_formatter):
-    def __init__(self) -> None:
-        pass
-
     def add_arguments(self, parser: Any, **kwargs: Any) -> None:
         parser.add_argument("--normalize-string-quotes", action="store_true",
                             help="Normalize all quotes to standart "
@@ -228,10 +224,10 @@ class formatter(main_formatter):
         v0_res = isevaluatable(original, prefix)
         if not v0_res[0]:
             print("")
-            print(col_red + f"Can't check original! Please test string manually!")
-            print("    " + col_red + f"Filename:   {token_dict['filename']}")
-            print("    " + col_red + f"Position:   {token_dict['pos']}")
-            print("    " + col_red + f"String:     {token_dict['token_string']}")
+            print(self.color.red + f"Can't check original! Please test string manually!")
+            print("    " + self.color.red + f"Filename:   {token_dict['filename']}")
+            print("    " + self.color.red + f"Position:   {token_dict['pos']}")
+            print("    " + self.color.red + f"String:     {token_dict['token_string']}")
             print("")
             save_values_to_file([token_dict], args, "original__bad_values")
             return original, quotes_codes.original__bad_value
@@ -242,21 +238,21 @@ class formatter(main_formatter):
             if args.debug:
                 print("#" * 100)
                 print(args.debug)
-                print(col_red + f"Return v1: {v1}")
+                print(self.color.red + f"Return v1: {v1}")
             return v1, quotes_codes.changed__new_quote
 
         v2_res = isevaluatable(v2, prefix)
         # Good string and value is not changed!
         if v2_res[0] and (v2_res[1] == v0_res[1]):
             if args.debug:
-                print(col_red + f"Return v2: {v2}")
+                print(self.color.red + f"Return v2: {v2}")
             return v2, quotes_codes.changed__old_quote
 
         v3 = self.bruteforce_body(new_body, prefix, new_quote)
         v3_res = isevaluatable(v3, prefix)
         if v3_res[0] and (v3_res[1] == v0_res[1]):
             if args.debug:
-                print(col_red + f"Return v3: {v3}")
+                print(self.color.red + f"Return v3: {v3}")
             return v3, quotes_codes.changed__quote_bruteforce
 
         return self.check_string__cant_transform(original, v1, v2, args, token_dict)
@@ -269,13 +265,13 @@ class formatter(main_formatter):
                                      token_dict: Dict[str, Any]
                                      ) -> Tuple[str, quotes_codes]:
         print("")
-        print(col_red + f"Can't transform, return original! Please simpify string manually!")
-        print("    " + col_red + f"Filename:   {token_dict['filename']}")
-        print("    " + col_red + f"Position:   {token_dict['pos']}")
-        print("    " + col_red + f"String:     {token_dict['token_string']}")
-        print("        " + col_red + f"Original:   {original}")
-        print("        " + col_red + f"Try v1:     {v1}")
-        print("        " + col_red + f"Try v2:     {v2}")
+        print(self.color.red + f"Can't transform, return original! Please simpify string manually!")
+        print("    " + self.color.red + f"Filename:   {token_dict['filename']}")
+        print("    " + self.color.red + f"Position:   {token_dict['pos']}")
+        print("    " + self.color.red + f"String:     {token_dict['token_string']}")
+        print("        " + self.color.red + f"Original:   {original}")
+        print("        " + self.color.red + f"Try v1:     {v1}")
+        print("        " + self.color.red + f"Try v2:     {v2}")
         print("")
         save_values_to_file([token_dict], args, "error_values")
 

@@ -1,23 +1,23 @@
-﻿from types import SimpleNamespace
+﻿import sys
+from types import SimpleNamespace
 from typing import Any
 from typing import Dict
 
-from autopep8_quotes.format._fmt_cls import main_formatter
+from autopep8_quotes._util._modules import main_formatter
 
 
 class formatter(main_formatter):
-    def __init__(self) -> None:
-        pass
-
     def add_arguments(self, parser: Any, **kwargs: Any) -> None:
-        parser.add_argument("-c", "--check-only", action="store_true",
+        parser.add_argument("-c", "--check", action="store_true",
                             help="Check if any changes are still needed (Exit with a status code of 1).")
+        parser.add_argument("-ch", "--check-only", action="store_true",
+                            help="Check if any changes are still needed (Exit with a status code of 1). "
+                            "Aggressive function that should not work with other 'saver' functions "
+                            "which edit files like --in-place/--new-file. ")
 
     def default_arguments(self, defaults: Dict[str, Any], **kwargs: Any) -> None:
+        defaults["check"] = False
         defaults["check_only"] = False
-
-    def parse(self, leaf: str, args: SimpleNamespace, token_dict: Dict[str, Any]) -> str:
-        return leaf
 
     def show_or_save(self,
                      args: SimpleNamespace,
@@ -26,8 +26,11 @@ class formatter(main_formatter):
                      **kwargs: Any
                      ) -> Any:
         """Actions with result"""
-        if args.check_only:
-            return ["return", True]
+        if source != formatted_source:
+            if args.check_only:
+                sys.exit(1)
+            if args.check:
+                return ["return", True]
         return "continue"
 
     def check_is_enabled(self, args: SimpleNamespace, **kwargs: Any) -> None:

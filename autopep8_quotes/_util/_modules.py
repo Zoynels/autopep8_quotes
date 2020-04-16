@@ -2,12 +2,21 @@ from types import SimpleNamespace
 from typing import Any
 from typing import Dict
 
-from autopep8_quotes._util import open_with_encoding
+from autopep8_quotes._util._colorama import col_green
+from autopep8_quotes._util._colorama import col_magenta
+from autopep8_quotes._util._colorama import col_red
+from autopep8_quotes._util._io import open_with_encoding
+from autopep8_quotes._util._io import print__stdout_err
 
 
 class main_formatter(object):
     def __init__(self) -> None:
         self.open_with_encoding = open_with_encoding
+        self.print__stdout_err = print__stdout_err
+        self.color = SimpleNamespace()
+        self.color.green = col_green
+        self.color.red = col_red
+        self.color.magenta = col_magenta
 
     def add_arguments(self, parser: Any, **kwargs: Any) -> None:
         """Add options like argparser.add_argument()"""

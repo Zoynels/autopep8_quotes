@@ -42,8 +42,13 @@ def load_modules(search_path: str, pat: Union[str, Pattern[Any]], ext: str) -> D
     modules_location = os.path.join(pathlib.Path(pkg__file__).parent, search_path)
 
     for f in os.listdir(modules_location):
+        if f.lower().startswith("__init__"):
+            continue
         if re.match(pat, f, re.DOTALL):
-            modulename: str = str(os.path.join(search_path, f)[:-len(ext)])
+            loc = os.path.abspath(pathlib.Path(pkg__file__).parent.parent)
+            modulename: str = os.path.abspath(os.path.join(modules_location, f))
+            modulename = modulename[len(loc):-len(ext)].lstrip(os.path.sep)
+
             while True:
                 st = modulename
                 modulename = modulename.replace("/", ".")
@@ -52,7 +57,8 @@ def load_modules(search_path: str, pat: Union[str, Pattern[Any]], ext: str) -> D
                 modulename = modulename.replace("..", ".")
                 if st == modulename:
                     break
-            _modules_dict[modulename] = __import__(modulename, globals(), level=1, fromlist=[""])
+
+            _modules_dict[modulename] = __import__(modulename, fromlist=[""])
     return _modules_dict
 
 

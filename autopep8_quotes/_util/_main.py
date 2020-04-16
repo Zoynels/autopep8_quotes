@@ -6,10 +6,10 @@ from typing import List
 import tokenize
 import untokenize  # type: ignore
 
-from autopep8_quotes._util import detect_encoding
-from autopep8_quotes._util import open_with_encoding
-from autopep8_quotes.format._format_util import get_token_dict
-from autopep8_quotes.format._format_util import save_values_to_file
+from autopep8_quotes._util._format import get_token_dict
+from autopep8_quotes._util._format import save_values_to_file
+from autopep8_quotes._util._io import detect_encoding
+from autopep8_quotes._util._io import open_with_encoding
 
 
 def format_file(args: SimpleNamespace) -> Any:

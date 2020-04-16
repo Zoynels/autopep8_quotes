@@ -1,6 +1,4 @@
-﻿"""Unify strings to all use the same quote.
-Unify all prefixex to lowercase.
-Remove u"" prefixes.
+﻿"""Unify strings to all use the same quote and etc.
 Source: https://github.com/Zoynels/autopep8_quotes"""
 
 import os
@@ -9,8 +7,8 @@ import signal
 import sys
 from typing import Any
 
-from autopep8_quotes._util import return__stdout_err
-from autopep8_quotes.format._main import format_file as __base_function__
+from autopep8_quotes._util._io import return__stdout_err
+from autopep8_quotes._util._main import format_file as __base_function__
 
 __version__ = "0.6"
 __title_name__ = "autopep8_quotes"
@@ -37,7 +35,7 @@ def _main(args: Any, standard_out: Any, standard_error: Any) -> int:
                 for f in children:
                     if f.startswith("."):
                         continue
-                    for pat in args.filename:
+                    for pat in args.read_files_matching_pattern:
                         if re.match(pat, os.path.join(root, f), re.DOTALL):
                             filenames.append(os.path.join(root, f))
 

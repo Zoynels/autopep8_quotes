@@ -9,7 +9,7 @@ from typing import Union
 
 import ast
 
-from autopep8_quotes._util import open_with_encoding
+from autopep8_quotes._util._io import open_with_encoding
 
 
 def get_token_dict(token_type: int, token_string: str, start: Tuple[int, int],
@@ -33,7 +33,7 @@ def get_token_dict(token_type: int, token_string: str, start: Tuple[int, int],
 def save_values_to_file(input_list: List[Dict[str, Any]], args: SimpleNamespace, name: str) -> None:
     if args.save_values_to_file:
         os.makedirs("log", exist_ok=True)
-        fname = f"log/autopep8_quotes.{name}.{args.datetime_start.strftime('%Y%d%m %H%M%S')}.txt"
+        fname = f"log/autopep8_quotes.{name}.{args._datetime_start.strftime('%Y%d%m %H%M%S')}.txt"
         if input_list:
             print(f"Write strings to {fname} from file " + input_list[0]["filename"])
         with open_with_encoding(fname, mode="a", encoding="utf-8") as output_file:

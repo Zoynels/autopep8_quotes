@@ -1,6 +1,7 @@
 ﻿import datetime
 import os
 import sys
+from types import SimpleNamespace
 from typing import Any
 from typing import Dict
 from typing import List
@@ -8,8 +9,8 @@ from typing import List
 from autopep8_quotes import __doc__
 from autopep8_quotes import __title_name__
 from autopep8_quotes import __version__
-from autopep8_quotes._util import load_modules
-from autopep8_quotes._util import parse_startup
+from autopep8_quotes._util._io import load_modules
+from autopep8_quotes._util._io import parse_startup
 
 __read_sections__ = ["pep8", "flake8", "autopep8", "autopep8_quotes"]
 
@@ -36,14 +37,14 @@ def str2bool_dict(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> None:
             pass
 
 
-def agrs_parse(argv: List[Any]) -> Any:  # type Namespace
+def agrs_parse(argv: List[Any]) -> SimpleNamespace:
     import argparse
     import configparser
 
     # Load all modules from location
     _modules_dict = {}
-    _modules_dict.update(load_modules("format", pat=r"(^|\/|\\)fmt_.*\.py$", ext=".py"))
-    _modules_dict.update(load_modules("format", pat=r"(^|\/|\\)save_.*\.py$", ext=".py"))
+    _modules_dict.update(load_modules("modules/formater", pat=r".*\.py$", ext=".py"))
+    _modules_dict.update(load_modules("modules/saver", pat=r".*\.py$", ext=".py"))
 
     # Set default arguments for function
     defaults: Dict[str, Any] = {}
@@ -54,7 +55,11 @@ def agrs_parse(argv: List[Any]) -> Any:  # type Namespace
     defaults["show_args"] = False
     defaults["save_values_to_file"] = False
     defaults["recursive"] = False
-    defaults["filename"] = [r".*\.py$"]
+    defaults["read_files_matching_pattern"] = [r".*\.py$"]
+    defaults["start_save_first"] = "check-only;diff-to-txt;diff;new-file"
+    defaults["start_save_last"] = "in-place;check"
+    defaults["start_parse_first"] = "remove-string-u-prefix;lowercase-string-prefix"
+    defaults["start_parse_last"] = "normalize-string-quotes"
 
     # Prepare config file parser
     conf_parser = argparse.ArgumentParser(add_help=False)
@@ -72,18 +77,26 @@ def agrs_parse(argv: List[Any]) -> Any:  # type Namespace
     conf_parser.add_argument("-v", "--version", action="version",
                              version="%(prog)s " + __version__,
                              help="Show program's version number and exit")
+    conf_parser.add_argument("--start-parse-first", type=str, 
+                             help="Define order when run parse function (before undefined functions).")
+    conf_parser.add_argument("--start-parse-last", type=str, 
+                             help="Define order when run parse function (after undefined functions).")
+    conf_parser.add_argument("--start-save-first", type=str, 
+                             help="Define order when run save function (before undefined functions).")
+    conf_parser.add_argument("--start-save-last", type=str, 
+                             help="Define order when run save function (after undefined functions).")
 
-    args, remaining_argv = conf_parser.parse_known_args()
+    args_parsed, remaining_argv = conf_parser.parse_known_args()
 
     # Read config files
     cfg_files = []
-    if args.autodetect_conf:
+    if args_parsed.autodetect_conf:
         for f in os.listdir():
             if f.endswith(".ini") or f.endswith(".cfg"):
                 cfg_files.append(f)
     cfg_files = sorted(cfg_files)
-    if args.config_file:
-        cfg_files.append(args.config_file)
+    if args_parsed.config_file:
+        cfg_files.append(args_parsed.config_file)
 
     for f in cfg_files:
         try:
@@ -92,7 +105,7 @@ def agrs_parse(argv: List[Any]) -> Any:  # type Namespace
             for sec in __read_sections__:
                 try:
                     _dict = dict(config.items(sec))
-                    _dict = {str(key).replace("-", "_"): value for (key, value) in _dict.items()}
+                    _dict = {str(k).replace("-", "_").lower(): v for (k, v) in _dict.items()}
                     str2bool_dict(defaults, _dict)
                     defaults.update(_dict)
                 except Exception as e:
@@ -113,7 +126,7 @@ def agrs_parse(argv: List[Any]) -> Any:  # type Namespace
                         help="Save all strings into file.")
     parser.add_argument("-r", "--recursive", action="store_true",
                         help="Drill down directories recursively")
-    parser.add_argument("--filename",
+    parser.add_argument("--read-files-matching-pattern",
                         type=str, nargs="+",
                         help="Check only for filenames matching the patterns.")
     parser.add_argument("files", nargs="+",
@@ -123,11 +136,15 @@ def agrs_parse(argv: List[Any]) -> Any:  # type Namespace
     for key in _modules_dict:
         _modules_dict[key].formatter().add_arguments(parser)
 
-    args = parser.parse_args(remaining_argv)
+    args_parsed = parser.parse_args(remaining_argv)
 
-    ###########################################################
+    ###################################################################
     # After prepare args we add some calculateble variables and modules
-    ###########################################################
+    ###################################################################
+
+    # Convert into SimpleNamespace to add new attrs in future
+    args = SimpleNamespace()
+    args.__dict__.update(args_parsed.__dict__)
 
     # Add loaded modules to args
     args._modules_dict = _modules_dict
@@ -136,8 +153,8 @@ def agrs_parse(argv: List[Any]) -> Any:  # type Namespace
     str2bool_dict(defaults, args.__dict__)
 
     # Transform string into list
-    if isinstance(args.filename, (str)):
-        args.filename = [args.filename]
+    if isinstance(args.read_files_matching_pattern, (str)):
+        args.read_files_matching_pattern = [args.read_files_matching_pattern]
 
     # Transform string values into list of order startup
     parse_startup(args, "start_parse")

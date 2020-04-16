@@ -51,4 +51,7 @@ with open("README.md") as readme:
           packages=["autopep8_quotes"],
           package_dir={"autopep8_quotes": "autopep8_quotes"},
           include_package_data=True,
-          install_requires=load_requirements("requirements.txt"))
+          install_requires=load_requirements("requirements.txt"),
+          extras_require = {
+              'colorama':  ["colorama"]
+          })

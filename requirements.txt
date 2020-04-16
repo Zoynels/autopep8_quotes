@@ -1,2 +1,1 @@
-untokenize
-colorama
+untokenize>=0.1.1
