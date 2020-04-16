@@ -9,11 +9,14 @@ from autopep8_quotes._util._modules import main_formatter
 class formatter(main_formatter):
     def add_arguments(self, parser: Any, **kwargs: Any) -> None:
         parser.add_argument("-c", "--check", action="store_true",
-                            help="Check if any changes are still needed (Exit with a status code of 1).")
+                            help="Check if any changes are still needed. "
+                            "Check all files and print list of files that need changes."
+                            "Exit with a status code of 1 if any of files need changes. ")
         parser.add_argument("-ch", "--check-only", action="store_true",
-                            help="Check if any changes are still needed (Exit with a status code of 1). "
+                            help="Check if any changes are still needed. "
                             "Aggressive function that should not work with other 'saver' functions "
-                            "which edit files like --in-place/--new-file (prevent its work). ")
+                            "which edit files like --in-place/--new-file (prevent its work). "
+                            "Exit with a status code of 1 when find first file that need changes. ")
 
     def default_arguments(self, defaults: Dict[str, Any], **kwargs: Any) -> None:
         defaults["check"] = False
