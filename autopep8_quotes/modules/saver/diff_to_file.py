@@ -32,12 +32,12 @@ class formatter(main_formatter):
                 lineterm="")
 
             os.makedirs("log", exist_ok=True)
-            fname = os.path.abspath(f"log/autopep8_quotes.diff.{args._datetime_start.strftime('%Y%d%m %H%M%S')}.txt")
-            self.print__stdout_err("\n" + self.color.magenta + f"Save diff-to-txt file: {fname}", out_type=args._standard_out)
-            self.print__stdout_err("\n", out_type=args._standard_out)
+            fname = os.path.abspath(f"log/autopep8_quotes.diff.{args._datetime_start.strftime('%Y%m%d %H%M%S')}.txt")
+            self.stdout_print("\n" + self.color.magenta + f"Save diff-to-txt file: {fname}", otype=args._standard_out)
+            self.stdout_print("\n", otype=args._standard_out)
 
             with self.open_with_encoding(fname, mode="a", encoding="utf-8") as output_file:
-                self.print__stdout_err("\n".join(list(diff)), out_type=output_file)
+                self.stdout_print("\n".join(list(diff)), otype=output_file)
 
     def check_is_enabled(self, args: SimpleNamespace, **kwargs: Any) -> None:
         """Check: Can function be enabled to run in script"""

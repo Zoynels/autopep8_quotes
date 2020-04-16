@@ -30,7 +30,7 @@ class formatter(main_formatter):
                 "before/" + args._read_filename,
                 "after/" + args._read_filename,
                 lineterm="")
-            self.print__stdout_err("\n".join(list(color_diff(diff)) + [""]), out_type=args._standard_out)
+            self.stdout_print("\n".join(list(color_diff(diff)) + [""]), otype=args._standard_out)
 
     def check_is_enabled(self, args: SimpleNamespace, **kwargs: Any) -> None:
         """Check: Can function be enabled to run in script"""

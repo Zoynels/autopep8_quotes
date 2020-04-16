@@ -13,7 +13,7 @@ class formatter(main_formatter):
         parser.add_argument("-ch", "--check-only", action="store_true",
                             help="Check if any changes are still needed (Exit with a status code of 1). "
                             "Aggressive function that should not work with other 'saver' functions "
-                            "which edit files like --in-place/--new-file. ")
+                            "which edit files like --in-place/--new-file (prevent its work). ")
 
     def default_arguments(self, defaults: Dict[str, Any], **kwargs: Any) -> None:
         defaults["check"] = False
@@ -28,9 +28,10 @@ class formatter(main_formatter):
         """Actions with result"""
         if source != formatted_source:
             if args.check_only:
-                sys.exit(1)
+                sys.exit("Error: need changes in file: {args._read_filename}")
             if args.check:
-                return ["return", True]
+                self.stdout_print("\n" + self.color.red + f"    need changes in file: {args._read_filename}", otype=args._standard_out)
+                self.stdout_print("\n", otype=args._standard_out)
         return "continue"
 
     def check_is_enabled(self, args: SimpleNamespace, **kwargs: Any) -> None:

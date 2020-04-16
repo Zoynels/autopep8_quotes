@@ -3,7 +3,6 @@ import os
 import pathlib
 import re
 import sys
-from types import SimpleNamespace
 from typing import Any
 from typing import Dict
 from typing import Pattern
@@ -25,7 +24,6 @@ def detect_encoding(filename: str) -> str:
         with open(filename, "rb") as input_file:
             from lib2to3.pgen2 import tokenize as lib2to3_tokenize
             encoding: str = lib2to3_tokenize.detect_encoding(input_file.readline)[0]  # type: ignore
-
             # Check for correctness of encoding.
             with open_with_encoding(filename, encoding) as input_file:
                 input_file.read()
@@ -62,61 +60,30 @@ def load_modules(search_path: str, pat: Union[str, Pattern[Any]], ext: str) -> D
     return _modules_dict
 
 
-def print__stdout_err(inp: Any, out_type: str) -> None:
-    if out_type is None:
-        print(inp)
-    elif isinstance(out_type, str):
-        if out_type.lower() == "sys.stdout":
+def stdout_print(inp: Any, otype: str) -> None:
+    if otype is None:
+        sys.stdout.write(inp)
+    elif isinstance(otype, str):
+        otype = otype.lower().strip()
+        if otype in ["sys.stdout", "out", ""]:
             sys.stdout.write(inp)
-        elif out_type.lower() == "sys.stderr":
+        elif otype in ["sys.stderr", "err"]:
             sys.stderr.write(inp)
         else:
-            print(inp)
+            sys.stdout.write(inp)
     else:
-        out_type.write(inp)
+        otype.write(inp)
 
 
-def return__stdout_err(out_type: str) -> Any:
-    if out_type is None:
+def stdout_return(otype: str) -> Any:
+    if otype is None:
         pass
-    elif isinstance(out_type, str):
-        if out_type.lower() == "sys.stdout":
+    elif isinstance(otype, str):
+        if otype.lower() == "sys.stdout":
             return sys.stdout
-        elif out_type.lower() == "sys.stderr":
+        elif otype.lower() == "sys.stderr":
             return sys.stderr
         else:
             pass
     else:
-        return out_type
-
-
-def parse_startup(args: SimpleNamespace, n: str) -> None:
-    """Transform string values into list of order startup
-
-    Get values from args:
-        start_save_first = "diff;new-file;in-place"
-        start_save_last = "check-only"
-    Get modules which could be run, which also stored in args, but get real files from pkg
-       _modules_dict = ["format.fmt_diff", "format.fmt_new_file", "format.fmt_in_place", "format.fmt_check_only", "format.fmt_something_else"]
-
-    Calculate new values:
-        _start_save_first = ["format.fmt_diff", "format.fmt_new_file", "format.fmt_in_place"]
-        _start_save_last = ["format.fmt_check_only"]
-        _start_save_med = ["format.fmt_something_else"]
-        _start_save_order = ["format.fmt_diff", "format.fmt_new_file", "format.fmt_in_place", "format.fmt_something_else", "format.fmt_check_only"]
-    Where the _start_save_order determines the order in which the modules start
-
-    First/Last modules could run several times
-"""
-    for val in [f"{n}_first", f"{n}_last"]:
-        args.__dict__[f"_{val}"] = []
-        for x in args.__dict__.get(val, "").replace("-", "_").lower().split(";"):
-            for y in list(args._modules_dict.keys()):
-                if y.lower().endswith(x):
-                    args.__dict__[f"_{val}"].append(y)
-    ts = set(args.__dict__[f"_{n}_first"] + args.__dict__[f"_{n}_last"])
-    args.__dict__[f"_{n}_med"] = list(set(list(args._modules_dict.keys())) - ts)
-    args.__dict__[f"_{n}_order"] = []
-    args.__dict__[f"_{n}_order"] += args.__dict__[f"_{n}_first"]
-    args.__dict__[f"_{n}_order"] += args.__dict__[f"_{n}_med"]
-    args.__dict__[f"_{n}_order"] += args.__dict__[f"_{n}_last"]
+        return otype

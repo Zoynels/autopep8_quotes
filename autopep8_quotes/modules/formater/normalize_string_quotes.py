@@ -229,15 +229,13 @@ class formatter(main_formatter):
             print("    " + self.color.red + f"Position:   {token_dict['pos']}")
             print("    " + self.color.red + f"String:     {token_dict['token_string']}")
             print("")
-            save_values_to_file([token_dict], args, "original__bad_values")
+            save_values_to_file([token_dict], args, "bad_original_values")
             return original, quotes_codes.original__bad_value
 
         v1_res = isevaluatable(v1, prefix)
         # Good string and value is not changed!
         if v1_res[0] and (v1_res[1] == v0_res[1]):
             if args.debug:
-                print("#" * 100)
-                print(args.debug)
                 print(self.color.red + f"Return v1: {v1}")
             return v1, quotes_codes.changed__new_quote
 

@@ -6,13 +6,13 @@ from autopep8_quotes._util._colorama import col_green
 from autopep8_quotes._util._colorama import col_magenta
 from autopep8_quotes._util._colorama import col_red
 from autopep8_quotes._util._io import open_with_encoding
-from autopep8_quotes._util._io import print__stdout_err
+from autopep8_quotes._util._io import stdout_print
 
 
 class main_formatter(object):
     def __init__(self) -> None:
         self.open_with_encoding = open_with_encoding
-        self.print__stdout_err = print__stdout_err
+        self.stdout_print = stdout_print
         self.color = SimpleNamespace()
         self.color.green = col_green
         self.color.red = col_red

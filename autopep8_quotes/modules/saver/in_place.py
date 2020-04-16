@@ -33,14 +33,14 @@ class formatter(main_formatter):
         """Check: Can be this function be enabled"""
         if args.in_place and args.check_only:
             args.in_place = False
-            self.print__stdout_err("\n" + self.color.red + "Option --in-place and --check_only shouldn't pass togeather.", out_type=args._standard_out)
-            self.print__stdout_err("\n", out_type=args._standard_out)
-            self.print__stdout_err("\n" + self.color.green + "Disable --in-place, run only --check_only", out_type=args._standard_out)
-            self.print__stdout_err("\n", out_type=args._standard_out)
+            self.stdout_print("\n" + self.color.red + "Option --in-place and --check_only shouldn't pass togeather.", otype=args._standard_out)
+            self.stdout_print("\n", otype=args._standard_out)
+            self.stdout_print("\n" + self.color.green + "Disable --in-place, run only --check_only", otype=args._standard_out)
+            self.stdout_print("\n", otype=args._standard_out)
 
         if args.in_place and args.new_file:
             args.in_place = False
-            self.print__stdout_err("\n" + self.color.red + "Option --in-place and --new-file shouldn't pass togeather.", out_type=args._standard_out)
-            self.print__stdout_err("\n", out_type=args._standard_out)
-            self.print__stdout_err("\n" + self.color.green + "Disable --in-place, run only --new-file", out_type=args._standard_out)
-            self.print__stdout_err("\n", out_type=args._standard_out)
+            self.stdout_print("\n" + self.color.red + "Option --in-place and --new-file shouldn't pass togeather.", otype=args._standard_out)
+            self.stdout_print("\n", otype=args._standard_out)
+            self.stdout_print("\n" + self.color.green + "Disable --in-place, run only --new-file", otype=args._standard_out)
+            self.stdout_print("\n", otype=args._standard_out)

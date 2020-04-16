@@ -33,7 +33,7 @@ class formatter(main_formatter):
         """Check: Can be this function be enabled"""
         if args.new_file and args.check_only:
             args.new_file = False
-            self.print__stdout_err("\n" + self.color.red + "Option --new-file and --check_only shouldn't pass togeather.", out_type=args._standard_out)
-            self.print__stdout_err("\n", out_type=args._standard_out)
-            self.print__stdout_err("\n" + self.color.green + "Disable --new-file, run only --check_only", out_type=args._standard_out)
-            self.print__stdout_err("\n", out_type=args._standard_out)
+            self.stdout_print("\n" + self.color.red + "Option --new-file and --check_only shouldn't pass togeather.", otype=args._standard_out)
+            self.stdout_print("\n", otype=args._standard_out)
+            self.stdout_print("\n" + self.color.green + "Disable --new-file, run only --check_only", otype=args._standard_out)
+            self.stdout_print("\n", otype=args._standard_out)

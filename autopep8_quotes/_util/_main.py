@@ -29,12 +29,10 @@ def format_file(args: SimpleNamespace) -> Any:
             filename=args._read_filename)
 
     if source != formatted_source:
-        result: List[Any] = [True]
-        for key in args._start_save_order:
-            if key not in args._modules_dict:
-                continue
-            func = args._modules_dict[key].formatter().show_or_save
-            res = func(args=args, source=source, formatted_source=formatted_source)
+        result: List[Any] = [False]
+        for _dict_mod in args._start_save_order:
+            func = _dict_mod["module"].formatter().show_or_save
+            res = func(args, source, formatted_source, **_dict_mod["kwargs"])
             if res is None:
                 pass
             elif isinstance(res, list):
@@ -53,8 +51,8 @@ def format_file(args: SimpleNamespace) -> Any:
                     continue
 
         if all(result):
-            return True
-    return False
+            return 1
+    return 0
 
 
 def format_code(source: str, args: SimpleNamespace, filename: str) -> Any:
@@ -85,14 +83,12 @@ def _format_code(source: str, args: SimpleNamespace, filename: str) -> Any:
             if args.save_values_to_file:
                 save_list.append(token_dict)
 
-            for key in args._start_parse_order:
-                if key not in args._modules_dict:
-                    continue
-                func = args._modules_dict[key].formatter().parse
-                token_string = func(token_string, args=args, token_dict=token_dict)
+            for _dict_mod in args._start_parse_order:
+                func = _dict_mod["module"].formatter().parse
+                token_string = func(token_string, args=args, token_dict=token_dict, **_dict_mod["kwargs"])
 
         modified_tokens.append((token_type, token_string, start, end, line))
 
-    save_values_to_file(save_list, args, "saved_values")
+    save_values_to_file(save_list, args, "found_values")
 
     return untokenize.untokenize(modified_tokens)
