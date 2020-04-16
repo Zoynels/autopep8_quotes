@@ -37,10 +37,3 @@ class formatter(main_formatter):
             self.stdout_print("\n", otype=args._standard_out)
             self.stdout_print("\n" + self.color.green + "Disable --in-place, run only --check_only", otype=args._standard_out)
             self.stdout_print("\n", otype=args._standard_out)
-
-        if args.in_place and args.new_file:
-            args.in_place = False
-            self.stdout_print("\n" + self.color.red + "Option --in-place and --new-file shouldn't pass togeather.", otype=args._standard_out)
-            self.stdout_print("\n", otype=args._standard_out)
-            self.stdout_print("\n" + self.color.green + "Disable --in-place, run only --new-file", otype=args._standard_out)
-            self.stdout_print("\n", otype=args._standard_out)
