@@ -44,24 +44,20 @@ def parse_startup(args: SimpleNamespace, n: str) -> None:
     Undefined function will run between First/Last modules in os.listdir() order
 
     args = SimpleNamespace()
-    args.__dict__["start_save_first"] = "check-only[{'sometext':'aha'}];diff-to-txt;diff;new-file;check-only"
+    args.__dict__["start_save_first"] = "check-only[{'sometext':'aha'}];new-file;check-only"
     args.__dict__["start_save_last"] = "in-place;check"
     args.__dict__["_modules_dict"] = {
         "mod/check_only": "somemodule",
-        "mod/diff_to_txt": "somemodule",
-        "mod/diff": "somemodule",
         "mod/new_file": "somemodule",
         "mod/in_place": "somemodule",
         "mod/check": "somemodule",
         "mod/somethingelse": "somemodule",
     }
     parse_startup(args, "start_save")
-    
+
     # Have result of function
     args._start_save_order == [
         {'mod_path': 'mod/check_only', 'module': 'somemodule', 'name': 'check_only', 'kwargs': {'sometext': 'aha'}, 'start': '_start_save_first'},
-        {'mod_path': 'mod/diff_to_txt', 'module': 'somemodule', 'name': 'diff_to_txt', 'kwargs': {}, 'start': '_start_save_first'},
-        {'mod_path': 'mod/diff', 'module': 'somemodule', 'name': 'diff', 'kwargs': {}, 'start': '_start_save_first'},
         {'mod_path': 'mod/new_file', 'module': 'somemodule', 'name': 'new_file', 'kwargs': {}, 'start': '_start_save_first'},
         {'mod_path': 'mod/check_only', 'module': 'somemodule', 'name': 'check_only', 'kwargs': {}, 'start': '_start_save_first'},
         {'mod_path': 'mod/somethingelse', 'module': 'somemodule', 'name': 'check', 'kwargs': {}, 'start': '_start_save_med'},
@@ -69,6 +65,22 @@ def parse_startup(args: SimpleNamespace, n: str) -> None:
         {'mod_path': 'mod/check', 'module': 'somemodule', 'name': 'check', 'kwargs': {}, 'start': '_start_save_last'}
     ]
 
+    # For check/save changes there should be such scenario:
+    # 1. Check all files: is there any need of changes (print files that need changes)
+    # 2. Save diff into file
+    # 3. Print diff into terminal
+    # 4. Make changes into independent file
+    # 5. Make changes into source file (rewrite it)
+    # 6. Check all files: is there any need of changes (Exit code 1)
+    defaults["start_save_first"] = "check;diff-to-txt;diff;new-file"
+    defaults["start_save_last"] = "in-place;check-only"
+    # You can change it, but be carefull!
+    # If code need changes and all modules will be Enabled
+    # Next scenarios will not work correct and program will prevent run of some operations:
+    # Scenario 1. If order will be changed to 5-4-3-2-1-6, then after inplace change there will be no diff in next stages
+    # so there is no need to enable modules 4-3-2
+    # Scenario 2. If order will be changed to 6-5-4-3-2-1, then after first check program will exit with code 1
+    # so there is no need to enable modules 5-4-3-2-1
 """
     all_used_modules = []
     for val in [f"{n}_first", f"{n}_last"]:
@@ -133,8 +145,14 @@ def agrs_parse(argv: List[Any]) -> SimpleNamespace:
     defaults["read_files_matching_pattern"] = [r".*\.py$"]
     defaults["start_parse_first"] = "remove-string-u-prefix;lowercase-string-prefix"
     defaults["start_parse_last"] = "normalize-string-quotes"
-    defaults["start_save_first"] = "check-only;diff-to-txt;diff;new-file"
-    defaults["start_save_last"] = "in-place;check"
+    # 1. Check all files: is there any need of changes
+    # 2. Save diff into file
+    # 3. Print diff into terminal
+    # 4. Make changes into independent file
+    # 5. Make changes into source file (rewrite it)
+    # 6. Check all files: is there any need of changes (Exit code 1)
+    defaults["start_save_first"] = "check;diff-to-txt;diff;new-file"
+    defaults["start_save_last"] = "in-place;check-only"
 
     # Prepare config file parser
     conf_parser = argparse.ArgumentParser(add_help=False)
