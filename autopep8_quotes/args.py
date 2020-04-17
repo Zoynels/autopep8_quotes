@@ -1,6 +1,7 @@
 ﻿import ast
 import datetime
 import os
+import pathlib
 import sys
 from types import SimpleNamespace
 from typing import Any
@@ -19,22 +20,25 @@ def str2bool(v: Any) -> bool:
     """Transforms string values into boolean"""
     if isinstance(v, bool):
         return v
-    if v.lower() in ("yes", "true", "t", "y", "1"):
+    elif str(v).lower() in ("yes", "true", "t", "y", "1"):
         return True
-    elif v.lower() in ("no", "false", "f", "n", "0"):
+    elif str(v).lower() in ("no", "false", "f", "n", "0"):
         return False
     else:
         return False
 
 
 def str2bool_dict(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> None:
-    for key in dict1:
-        try:
-            if isinstance(dict1[key], (bool)):
-                if key in dict2:
-                    dict2[key] = str2bool(dict2[key])
-        except BaseException:
-            pass
+    try:
+        for key in dict1:
+            try:
+                if isinstance(dict1[key], (bool)):
+                    if key in dict2:
+                        dict2[key] = str2bool(dict2[key])
+            except Exception:  # pragma: no cover
+                pass
+    except Exception:  # pragma: no cover
+        pass
 
 
 def parse_startup(args: SimpleNamespace, n: str) -> None:
@@ -122,21 +126,33 @@ def parse_startup(args: SimpleNamespace, n: str) -> None:
             args.__dict__[f"_{n}_order"].append(k)
 
 
-def agrs_parse(argv: List[Any]) -> SimpleNamespace:
+def agrs_parse(argv: List[Any], **kwargs: Any) -> SimpleNamespace:
     """Main function to parse basic args of cli"""
     import argparse
     import configparser
 
     # Load all modules from location
     _modules_dict = {}
-    _modules_dict.update(load_modules("modules/formater", pat=r".*\.py$", ext=".py"))
-    _modules_dict.update(load_modules("modules/saver", pat=r".*\.py$", ext=".py"))
+    _modules_dict.update(load_modules("modules/formater", pat=r".*\.py$"))
+    _modules_dict.update(load_modules("modules/saver", pat=r".*\.py$"))
 
-    # Set default arguments for function
+    # Prepare config file parser
+    conf_parser = argparse.ArgumentParser(add_help=False)
+
+    # Do not add args which could be rewritten by config-file
+    # Use here only args which influence on config-file
+    conf_parser.add_argument("-f", "--config-file",
+                             help="Specify config file", metavar="FILE")
+    conf_parser.add_argument("-a", "--autodetect-config-file",
+                             metavar="FILEPATH", default="",
+                             help="Try to detect config file: *.ini, *.cfg in location. ")
+
+    args_parsed, remaining_argv = conf_parser.parse_known_args(argv)
+
+    # Set default arguments for function after parse
     defaults: Dict[str, Any] = {}
     for key in _modules_dict:
         _modules_dict[key].formatter().default_arguments(defaults)
-
     defaults["print_files"] = False
     defaults["debug"] = False
     defaults["show_args"] = False
@@ -154,33 +170,22 @@ def agrs_parse(argv: List[Any]) -> SimpleNamespace:
     defaults["start_save_first"] = "check;diff-to-txt;diff;new-file"
     defaults["start_save_last"] = "in-place;check-only"
 
-    # Prepare config file parser
-    conf_parser = argparse.ArgumentParser(add_help=False)
-    conf_parser.set_defaults(**defaults)
-
-    # Do not add args which could be rewritten by config-file
-    # Use here only args which influence on config-file
-    conf_parser.add_argument("-f", "--config-file",
-                             help="Specify config file", metavar="FILE")
-    conf_parser.add_argument("-a", "--autodetect-config-file",
-                             action="store_true", default=True,
-                             help="Try to detect config file: *.ini, *.cfg")
-
-    args_parsed, remaining_argv = conf_parser.parse_known_args()
-
     # Read config files
     cfg_files = []
     if args_parsed.autodetect_config_file:
-        for f in os.listdir():
-            if f.endswith(".ini") or f.endswith(".cfg"):
-                cfg_files.append(f)
+        look_dir = pathlib.Path(args_parsed.autodetect_config_file)
+        if not look_dir.is_dir():
+            look_dir = look_dir.parent
+        for f in os.listdir(look_dir):
+            if f.lower().endswith(".ini") or f.lower().endswith(".cfg"):
+                cfg_files.append(str(look_dir.joinpath(f)))
     cfg_files = sorted(cfg_files)
     if args_parsed.config_file:
         cfg_files.append(args_parsed.config_file)
 
     for f in cfg_files:
         try:
-            config = configparser.SafeConfigParser()
+            config = configparser.ConfigParser()
             config.read([f])
             for sec in __read_sections__:
                 try:
@@ -238,14 +243,16 @@ def agrs_parse(argv: List[Any]) -> SimpleNamespace:
                         "bad original values and error values when reformat them.")
 
     # Define files which should be parsed
-    parser.add_argument("files", nargs="+",
+    parser.add_argument("--files", nargs="+",
                         help="Files to format")
 
     # Add options like argparser.add_argument() from loaded modules
     for key in _modules_dict:
         _modules_dict[key].formatter().add_arguments(parser)
 
-    args_parsed = parser.parse_args(remaining_argv)
+    args_parsed, remaining_argv = parser.parse_known_args(remaining_argv)
+    if remaining_argv:
+        print(f"Warning: Unrecognized arguments: {remaining_argv}")
 
     ###################################################################
     # After prepare args we add some calculateble variables and modules
@@ -254,16 +261,13 @@ def agrs_parse(argv: List[Any]) -> SimpleNamespace:
     # Convert into SimpleNamespace to add new attrs in future
     args = SimpleNamespace()
     args.__dict__.update(args_parsed.__dict__)
+    args.__dict__.update(kwargs)
 
     # Add loaded modules to args
     args._modules_dict = _modules_dict
 
     # Transform string values into boolean
     str2bool_dict(defaults, args.__dict__)
-
-    # Transform string into list
-    if isinstance(args.read_files_matching_pattern, (str)):
-        args.read_files_matching_pattern = [args.read_files_matching_pattern]
 
     # Transform string values into list of order startup
     parse_startup(args, "start_parse")

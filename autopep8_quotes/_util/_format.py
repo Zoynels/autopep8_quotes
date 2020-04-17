@@ -39,13 +39,18 @@ def save_values_to_file(input_list: List[Dict[str, Any]], args: SimpleNamespace,
         with open_with_encoding(fname, mode="a", encoding="utf-8") as output_file:
             for i, token_dict in enumerate(input_list):
                 try:
+                    for key in token_dict:
+                        if isinstance(token_dict[key], (bytes)):
+                            token_dict[key] = token_dict[key].decode()
+
                     output_file.write("\n")
                     output_file.write("# " + token_dict["filename"] + ":" + token_dict["pos1"])
                     output_file.write("\n")
                     output_file.write(f"a_{i+1} = " + token_dict["token_string"])
                     output_file.write("\n")
-                except BaseException:
-                    pass
+                except BaseException as e:
+                    print(e)
+                    print(f"    for token_dict: {token_dict}")
 
 
 def isevaluatable(s: str, prefix: str = "") -> Tuple[bool, Any]:

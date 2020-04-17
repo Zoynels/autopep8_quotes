@@ -1,3 +1,5 @@
+from abc import ABCMeta
+from abc import abstractmethod
 from types import SimpleNamespace
 from typing import Any
 from typing import Dict
@@ -10,6 +12,9 @@ from autopep8_quotes._util._io import stdout_print
 
 
 class main_formatter(object):
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
     def __init__(self) -> None:
         self.open_with_encoding = open_with_encoding
         self.stdout_print = stdout_print
@@ -18,18 +23,22 @@ class main_formatter(object):
         self.color.red = col_red
         self.color.magenta = col_magenta
 
+    @abstractmethod
     def add_arguments(self, parser: Any, **kwargs: Any) -> None:
         """Add options like argparser.add_argument()"""
         pass
 
+    @abstractmethod
     def default_arguments(self, defaults: Dict[str, Any], **kwargs: Any) -> None:
         """Set default args for argparser"""
         pass
 
+    @abstractmethod
     def parse(self, leaf: str, args: SimpleNamespace, token_dict: Dict[str, Any]) -> str:
         """Action on token"""
-        return leaf
+        return leaf  # pragma: no cover
 
+    @abstractmethod
     def show_or_save(self,
                      args: SimpleNamespace,
                      source: Any,
@@ -37,8 +46,9 @@ class main_formatter(object):
                      **kwargs: Any
                      ) -> Any:
         """Actions with result"""
-        pass
+        pass  # pragma: no cover
 
+    @abstractmethod
     def check_is_enabled(self, args: SimpleNamespace, **kwargs: Any) -> None:
         """Check: Can be this function be enabled"""
         pass

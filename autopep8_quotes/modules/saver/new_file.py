@@ -28,12 +28,3 @@ class formatter(main_formatter):
                                          mode="w",
                                          encoding=args._read_encoding) as output_file:
                 output_file.write(formatted_source)
-
-    def check_is_enabled(self, args: SimpleNamespace, **kwargs: Any) -> None:
-        """Check: Can be this function be enabled"""
-        if args.new_file and args.check_only:
-            args.new_file = False
-            self.stdout_print("\n" + self.color.red + "Option --new-file and --check_only shouldn't pass togeather.", otype=args._standard_out)
-            self.stdout_print("\n", otype=args._standard_out)
-            self.stdout_print("\n" + self.color.green + "Disable --new-file, run only --check_only", otype=args._standard_out)
-            self.stdout_print("\n", otype=args._standard_out)

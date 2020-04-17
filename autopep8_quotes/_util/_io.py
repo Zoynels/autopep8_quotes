@@ -9,23 +9,34 @@ from typing import Pattern
 from typing import Union
 
 
-def open_with_encoding(filename: str, encoding: str, mode: str = "rb") -> Any	:
+def open_with_encoding(filename: str, encoding: str = "", mode: str = "rb") -> Any	:
     """Return opened file with a specific encoding."""
-    if mode.lower() == "rb":
+    if mode is None:
+        raise ValueError("open_with_encoding mode is None")
+    else:
+        mode = str(mode).lower()
+
+    if "b" in str(mode).lower():
         return io.open(filename, mode=mode)
     else:
-        return io.open(filename, mode=mode, encoding=encoding,
-                       newline="")  # Preserve line endings
+        try:
+            # Preserve line endings
+            return io.open(filename, mode=mode, encoding=encoding, newline="")
+        except BaseException:
+            encoding = detect_encoding(filename)
+            # Preserve line endings
+            return io.open(filename, mode=mode, encoding=encoding, newline="")
 
 
 def detect_encoding(filename: str) -> str:
     """Return file encoding."""
+    from lib2to3.pgen2 import tokenize as lib2to3_tokenize
+    mode = "rb"
     try:
-        with open(filename, "rb") as input_file:
-            from lib2to3.pgen2 import tokenize as lib2to3_tokenize
+        with open(filename, mode=mode) as input_file:
             encoding: str = lib2to3_tokenize.detect_encoding(input_file.readline)[0]  # type: ignore
             # Check for correctness of encoding.
-            with open_with_encoding(filename, encoding) as input_file:
+            with open_with_encoding(filename, encoding, mode=mode) as input_file:
                 input_file.read()
 
         return encoding
@@ -33,7 +44,7 @@ def detect_encoding(filename: str) -> str:
         return "latin-1"
 
 
-def load_modules(search_path: str, pat: Union[str, Pattern[Any]], ext: str) -> Dict[str, Any]:
+def load_modules(search_path: str, pat: Union[str, Pattern[Any]]) -> Dict[str, Any]:
     """Load reformat modules"""
     _modules_dict: Dict[str, Any] = {}
     from autopep8_quotes import __file__ as pkg__file__
@@ -43,6 +54,7 @@ def load_modules(search_path: str, pat: Union[str, Pattern[Any]], ext: str) -> D
         if f.lower().startswith("__init__"):
             continue
         if re.match(pat, f, re.DOTALL):
+            ext = pathlib.Path(f).suffix
             loc = os.path.abspath(pathlib.Path(pkg__file__).parent.parent)
             modulename: str = os.path.abspath(os.path.join(modules_location, f))
             modulename = modulename[len(loc):-len(ext)].lstrip(os.path.sep)
@@ -60,30 +72,40 @@ def load_modules(search_path: str, pat: Union[str, Pattern[Any]], ext: str) -> D
     return _modules_dict
 
 
-def stdout_print(inp: Any, otype: str) -> None:
+def stdout_print(value: Any, otype: str = "", sep: str = " ", end: str = "\n") -> None:
+    try:
+        stdout_get(otype).write(value)
+        stdout_get(otype).write(end)
+    except BaseException:
+        stdout_get(otype).write(str(value).encode("utf-8"))
+        stdout_get(otype).write(str(end).encode("utf-8"))
+    if False:
+        try:
+            p = sep.join(str(a) for a in value)
+            print(p, end=end, file=stdout_get(otype))
+        except BaseException:
+            if not isinstance(sep, (bytes)):
+                sep = sep.encode("utf-8")
+            if not isinstance(sep, (bytes)):
+                end = end.encode("utf-8")
+            pL = []
+            for a in value:
+                if not isinstance(sep, (bytes)):
+                    a = a.encode("utf-8")
+                pL.append(a)
+            p = sep.join(pL)
+            print(p, end=end, file=stdout_get(otype))
+
+
+def stdout_get(otype: Any) -> Any:
     if otype is None:
-        sys.stdout.write(inp)
-    elif isinstance(otype, str):
-        otype = otype.lower().strip()
-        if otype in ["sys.stdout", "out", ""]:
-            sys.stdout.write(inp)
-        elif otype in ["sys.stderr", "err"]:
-            sys.stderr.write(inp)
-        else:
-            sys.stdout.write(inp)
+        return sys.stdout
+    elif hasattr(otype, "write"):
+        if isinstance(otype, type):
+            return otype()
+        return otype
     else:
-        otype.write(inp)
-
-
-def stdout_return(otype: str) -> Any:
-    if otype is None:
-        pass
-    elif isinstance(otype, str):
-        if otype.lower() == "sys.stdout":
-            return sys.stdout
-        elif otype.lower() == "sys.stderr":
+        if str(otype).lower() in ["sys.stderr", "err", "error"]:
             return sys.stderr
         else:
-            pass
-    else:
-        return otype
+            return sys.stdout

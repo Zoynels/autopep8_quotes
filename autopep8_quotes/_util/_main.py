@@ -35,22 +35,17 @@ def format_file(args: SimpleNamespace) -> Any:
             res = func(args, source, formatted_source, **_dict_mod["kwargs"])
             if res is None:
                 pass
-            elif isinstance(res, list):
+            elif isinstance(res, (list, tuple)):
                 if res[0].lower() == "return":
                     if len(res[1:]) == 1:
                         result.append(res[1])
                     else:
                         result.append(res[1:])
-                if res[0].lower() == "immediately return":
-                    if len(res[1:]) == 1:
-                        return res[1]
-                    else:
-                        return res[1:]
             elif isinstance(res, str):
                 if res.lower() == "continue":
                     continue
 
-        if all(result):
+        if any(result):
             return 1
     return 0
 
@@ -59,7 +54,7 @@ def format_code(source: str, args: SimpleNamespace, filename: str) -> Any:
     """Return source code with quotes unified."""
     try:
         return _format_code(source, args, filename)
-    except (tokenize.TokenError, IndentationError):
+    except (tokenize.TokenError, IndentationError):  # pragma: no cover
         return source
 
 
