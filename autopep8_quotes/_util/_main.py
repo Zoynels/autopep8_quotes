@@ -55,10 +55,26 @@ def format_file(args: SimpleNamespace) -> Any:
 
 def format_code(source: str, args: SimpleNamespace, filename: str, fmt_classs: Any) -> Any:
     """Return source code with quotes unified."""
+    if search_comment_code(source, search="flake8: noqa"):
+        # no check/reformat entire file
+        return source
     try:
         return _format_code(source, args, filename, fmt_classs=fmt_classs)
     except (tokenize.TokenError, IndentationError):  # pragma: no cover
         return source
+
+def search_comment_code(line, search="noqa"):
+    sio = io.StringIO(line)
+    for token in tokenize.generate_tokens(sio.readline):
+        if token.type == tokenize.COMMENT:
+            t = token.string.lower().strip().strip("#;, \t\n\r")
+            if t == search:
+                return True
+            elif t.endswith(search):
+                return True
+            elif t.startswith(search):
+                return True
+    return False
 
 
 def _format_code(source: str, args: SimpleNamespace, filename: str, fmt_classs: Any) -> Any:
@@ -73,12 +89,16 @@ def _format_code(source: str, args: SimpleNamespace, filename: str, fmt_classs: 
 
     for (token_type, token_string, start, end, line) in tokenize.generate_tokens(sio.readline):
         if token_type == tokenize.STRING:
-            token_dict = get_token_dict(token_type, token_string, start, end, line, filename)
-
-            if args.save_values_to_file:
-                save_list.append(token_dict)
-
-                token_string = fmt_classs.parse(token_string, args=args, token_dict=token_dict, **_dict_mod["kwargs"])
+            if search_comment_code(line, search="noqa"):
+                pass
+                # no check/reformat line
+            else:
+                token_dict = get_token_dict(token_type, token_string, start, end, line, filename)
+    
+                if args.save_values_to_file:
+                    save_list.append(token_dict)
+    
+                    token_string = fmt_classs.parse(token_string, args=args, token_dict=token_dict, **_dict_mod["kwargs"])
 
         modified_tokens.append((token_type, token_string, start, end, line))
 
