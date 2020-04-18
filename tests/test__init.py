@@ -18,7 +18,7 @@ def write_changeable_string(fname: str) -> None:
         h = ''''''
         Z = ""
         z = Z
-    """
+    """ # noqa
     with open(fname, "wb") as file:
         file.write(test_str)
 
