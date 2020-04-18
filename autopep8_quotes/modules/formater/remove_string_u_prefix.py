@@ -26,3 +26,7 @@ class formatter(main_formatter):
             new_prefix = orig_prefix.replace("u", "")
             leaf = f"{new_prefix}{match.group(2)}"
         return leaf
+
+    def check_is_enabled(self, args: SimpleNamespace, **kwargs: Any) -> Any:
+        """Check: Can be this function be enabled"""
+        return args.remove_string_u_prefix

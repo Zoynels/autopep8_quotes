@@ -22,9 +22,17 @@ class formatter(main_formatter):
                      source: Any,
                      formatted_source: Any,
                      **kwargs: Any
-                     ) -> None:
+                     ) -> Any:
         """Actions with result"""
-        if args.in_place:
-            with self.open_with_encoding(args._read_filename, mode="w",
-                                         encoding=args._read_encoding) as output_file:
-                output_file.write(formatted_source)
+        if source != formatted_source:
+            if args.in_place:
+                with self.open_with_encoding(args._read_filename, mode="w",
+                                             encoding=args._read_encoding) as output_file:
+                    output_file.write(formatted_source)
+                args._read_file_need_load = True
+                return "return", False
+        return "continue"
+
+    def check_is_enabled(self, args: SimpleNamespace, **kwargs: Any) -> Any:
+        """Check: Can be this function be enabled"""
+        return args.in_place

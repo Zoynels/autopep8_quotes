@@ -23,8 +23,15 @@ class formatter(main_formatter):
                      **kwargs: Any
                      ) -> Any:
         """Actions with result"""
-        if args.new_file:
-            with self.open_with_encoding(args._read_filename + ".autopep8_quotes",
-                                         mode="w",
-                                         encoding=args._read_encoding) as output_file:
-                output_file.write(formatted_source)
+        if source != formatted_source:
+            if args.new_file:
+                with self.open_with_encoding(args._read_filename + ".autopep8_quotes",
+                                             mode="w",
+                                             encoding=args._read_encoding) as output_file:
+                    output_file.write(formatted_source)
+                return "return", True
+        return "continue"
+
+    def check_is_enabled(self, args: SimpleNamespace, **kwargs: Any) -> Any:
+        """Check: Can be this function be enabled"""
+        return args.new_file

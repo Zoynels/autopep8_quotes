@@ -3,10 +3,13 @@ import os
 import pathlib
 import re
 import sys
+from types import SimpleNamespace
 from typing import Any
 from typing import Dict
 from typing import Pattern
 from typing import Union
+
+from pkg_resources import iter_entry_points
 
 
 def open_with_encoding(filename: str, encoding: str = "", mode: str = "rb") -> Any	:
@@ -70,6 +73,17 @@ def load_modules(search_path: str, pat: Union[str, Pattern[Any]]) -> Dict[str, A
 
             _modules_dict[modulename] = __import__(modulename, fromlist=[""])
     return _modules_dict
+
+
+def load_modules_ep(group: str) -> Dict[str, Any]:
+    available_methods = {}
+    for entry_point in iter_entry_points(group=group):
+        name = f"{entry_point.module_name}:{entry_point.name}"
+        available_methods[name] = SimpleNamespace()
+        available_methods[name].ep = entry_point
+        available_methods[name].loaded = entry_point.load()
+        available_methods[name].apply = available_methods[name].loaded()
+    return available_methods
 
 
 def stdout_print(value: Any, otype: str = "", sep: str = " ", end: str = "\n") -> None:

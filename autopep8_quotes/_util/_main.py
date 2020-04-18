@@ -7,7 +7,6 @@ import tokenize
 import untokenize  # type: ignore
 
 from autopep8_quotes._util._format import get_token_dict
-from autopep8_quotes._util._format import save_values_to_file
 from autopep8_quotes._util._io import detect_encoding
 from autopep8_quotes._util._io import open_with_encoding
 
@@ -20,50 +19,57 @@ def format_file(args: SimpleNamespace) -> Any:
 
     """
     args._read_encoding = detect_encoding(args._read_filename)
-    with open_with_encoding(args._read_filename, encoding=args._read_encoding, mode="rb") as input_file:
-        source = input_file.read()
-        formatted_source = source.decode(args._read_encoding)
-        for _dict_mod in args._start_parse_order:
-            # Update source every run
-            source = formatted_source
-            formatted_source = format_code(
-                source,
-                args=args,
-                filename=args._read_filename,
-                fmt_classs=_dict_mod["module"].formatter())
-    
-            if source != formatted_source:
-                result: List[Any] = [False]
-                func = _dict_mod["module"].formatter().show_or_save
-                res = func(args, source, formatted_source, **_dict_mod["kwargs"])
-                if res is None:
-                    pass
-                elif isinstance(res, (list, tuple)):
-                    if res[0].lower() == "return":
-                        if len(res[1:]) == 1:
-                            result.append(res[1])
-                        else:
-                            result.append(res[1:])
-                elif isinstance(res, str):
-                    if res.lower() == "continue":
-                        continue
-        
-                if any(result):
-                    return 1
-    return 0
+    args._read_file_need_load = True
+
+    result: List[Any] = [False]
+    for plugin in args._plugin_order_onfile_order:
+        if not plugin.apply.check_is_enabled(args):
+            continue
+
+        if args._read_file_need_load:
+            # On first launch read file
+            # If file changed, e.i. --in-place, then need to reload file on next run (data is updated)
+            with open_with_encoding(args._read_filename, encoding=args._read_encoding, mode="rb") as input_file:
+                source = input_file.read()
+                source = source.decode(args._read_encoding)
+
+        formatted_source = format_code(
+            source,
+            args=args,
+            filename=args._read_filename
+        )
+
+        result = [False]
+        if source != formatted_source:
+            func = plugin.apply.show_or_save
+            res = func(args, source, formatted_source, **plugin.kwargs)
+            if res is None:
+                pass
+            elif isinstance(res, (list, tuple)):
+                if res[0].lower() == "return":
+                    if len(res[1:]) == 1:
+                        result.append(res[1])
+                    else:
+                        result.append(res[1:])
+            elif isinstance(res, str):
+                if res.lower() == "continue":
+                    continue
+
+    return any(result)
 
 
-def format_code(source: str, args: SimpleNamespace, filename: str, fmt_classs: Any) -> Any:
+def format_code(source: str, args: SimpleNamespace, filename: str) -> Any:
     """Return source code with quotes unified."""
     if search_comment_code(source, search="flake8: noqa"):
         # no check/reformat entire file
         return source
     try:
-        return _format_code(source, args, filename, fmt_classs=fmt_classs)
+        return _format_code(source, args, filename)
     except (tokenize.TokenError, IndentationError):  # pragma: no cover
         return source
 
-def search_comment_code(line, search="noqa"):
+
+def search_comment_code(line: str, search: str = "noqa") -> bool:
     sio = io.StringIO(line)
     for token in tokenize.generate_tokens(sio.readline):
         if token.type == tokenize.COMMENT:
@@ -77,15 +83,13 @@ def search_comment_code(line, search="noqa"):
     return False
 
 
-def _format_code(source: str, args: SimpleNamespace, filename: str, fmt_classs: Any) -> Any:
+def _format_code(source: str, args: SimpleNamespace, filename: str) -> Any:
     """Return source code with quotes unified."""
     if not source:
         return source
 
     modified_tokens = []
-
     sio = io.StringIO(source)
-    save_list = []
 
     for (token_type, token_string, start, end, line) in tokenize.generate_tokens(sio.readline):
         if token_type == tokenize.STRING:
@@ -93,15 +97,16 @@ def _format_code(source: str, args: SimpleNamespace, filename: str, fmt_classs: 
                 pass
                 # no check/reformat line
             else:
-                token_dict = get_token_dict(token_type, token_string, start, end, line, filename)
-    
-                if args.save_values_to_file:
-                    save_list.append(token_dict)
-    
-                    token_string = fmt_classs.parse(token_string, args=args, token_dict=token_dict, **_dict_mod["kwargs"])
+                for plugin in args._plugin_order_ontoken_order:
+                    token_dict = get_token_dict(token_type, token_string, start, end, line, filename)
+
+                    if not plugin.apply.check_is_enabled(args):
+                        continue
+                    #print("args._plugin_order_ontoken_order", plugin.name)
+                    #print("before: ", token_string)
+                    token_string = plugin.apply.parse(token_string, args=args, token_dict=token_dict, **plugin.kwargs)
+                    #print("after:  ", token_string)
 
         modified_tokens.append((token_type, token_string, start, end, line))
-
-    save_values_to_file(save_list, args, "found_values")
 
     return untokenize.untokenize(modified_tokens)

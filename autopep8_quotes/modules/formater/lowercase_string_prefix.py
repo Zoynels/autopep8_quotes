@@ -30,3 +30,7 @@ class formatter(main_formatter):
             new_prefix = new_prefix.replace("B", "b")
             leaf = f"{new_prefix}{match.group(2)}"
         return leaf
+
+    def check_is_enabled(self, args: SimpleNamespace, **kwargs: Any) -> Any:
+        """Check: Can be this function be enabled"""
+        return args.lowercase_string_prefix

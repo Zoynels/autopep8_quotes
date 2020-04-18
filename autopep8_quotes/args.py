@@ -1,5 +1,4 @@
-﻿import ast
-import datetime
+﻿import datetime
 import os
 import pathlib
 import sys
@@ -11,119 +10,11 @@ from typing import List
 from autopep8_quotes import __doc__
 from autopep8_quotes import __title_name__
 from autopep8_quotes import __version__
-from autopep8_quotes._util._io import load_modules
+from autopep8_quotes._util._args import parse_startup
+from autopep8_quotes._util._args import str2bool_dict
+from autopep8_quotes._util._io import load_modules_ep
 
 __read_sections__ = ["pep8", "flake8", "autopep8", "autopep8_quotes"]
-
-
-def str2bool(v: Any) -> bool:
-    """Transforms string values into boolean"""
-    if isinstance(v, bool):
-        return v
-    elif str(v).lower() in ("yes", "true", "t", "y", "1"):
-        return True
-    elif str(v).lower() in ("no", "false", "f", "n", "0"):
-        return False
-    else:
-        return False
-
-
-def str2bool_dict(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> None:
-    try:
-        for key in dict1:
-            try:
-                if isinstance(dict1[key], (bool)):
-                    if key in dict2:
-                        dict2[key] = str2bool(dict2[key])
-            except Exception:  # pragma: no cover
-                pass
-    except Exception:  # pragma: no cover
-        pass
-
-
-def parse_startup(args: SimpleNamespace, n: str) -> None:
-    """Transform string values into list of order startup
-    First/Last modules could run several times like check-only in example
-        that will run several times with different arguments
-    Undefined function will run between First/Last modules in os.listdir() order
-
-    args = SimpleNamespace()
-    args.__dict__["start_save_first"] = "check-only[{'sometext':'aha'}];new-file;check-only"
-    args.__dict__["start_save_last"] = "in-place;check"
-    args.__dict__["_modules_dict"] = {
-        "mod/check_only": "somemodule",
-        "mod/new_file": "somemodule",
-        "mod/in_place": "somemodule",
-        "mod/check": "somemodule",
-        "mod/somethingelse": "somemodule",
-    }
-    parse_startup(args, "start_save")
-
-    # Have result of function
-    args._start_save_order == [
-        {'mod_path': 'mod/check_only', 'module': 'somemodule', 'name': 'check_only', 'kwargs': {'sometext': 'aha'}, 'start': '_start_save_first'},
-        {'mod_path': 'mod/new_file', 'module': 'somemodule', 'name': 'new_file', 'kwargs': {}, 'start': '_start_save_first'},
-        {'mod_path': 'mod/check_only', 'module': 'somemodule', 'name': 'check_only', 'kwargs': {}, 'start': '_start_save_first'},
-        {'mod_path': 'mod/somethingelse', 'module': 'somemodule', 'name': 'check', 'kwargs': {}, 'start': '_start_save_med'},
-        {'mod_path': 'mod/in_place', 'module': 'somemodule', 'name': 'in_place', 'kwargs': {}, 'start': '_start_save_last'},
-        {'mod_path': 'mod/check', 'module': 'somemodule', 'name': 'check', 'kwargs': {}, 'start': '_start_save_last'}
-    ]
-
-    # For check/save changes there should be such scenario:
-    # 1. Check all files: is there any need of changes (print files that need changes)
-    # 2. Save diff into file
-    # 3. Print diff into terminal
-    # 4. Make changes into independent file
-    # 5. Make changes into source file (rewrite it)
-    # 6. Check all files: is there any need of changes (Exit code 1)
-    defaults["start_save_first"] = "check;diff-to-txt;diff;new-file"
-    defaults["start_save_last"] = "in-place;check-only"
-    # You can change it, but be carefull!
-    # If code need changes and all modules will be Enabled
-    # Next scenarios will not work correct and program will prevent run of some operations:
-    # Scenario 1. If order will be changed to 5-4-3-2-1-6, then after inplace change there will be no diff in next stages
-    # so there is no need to enable modules 4-3-2
-    # Scenario 2. If order will be changed to 6-5-4-3-2-1, then after first check program will exit with code 1
-    # so there is no need to enable modules 5-4-3-2-1
-"""
-    all_used_modules = []
-    for val in [f"{n}_first", f"{n}_last"]:
-        args.__dict__[f"_{val}"] = []
-        st = args.__dict__.get(val, "").replace("-", "_").lower()
-        for x in st.split(";"):
-            pos = x.find("[")
-            if pos == -1:
-                name, kwargs = x, {}
-            else:
-                name, kwargs = x[:pos], ast.literal_eval(x[pos:][1:-1])
-            for mod in list(args._modules_dict.keys()):
-                if mod.lower().replace("-", "_").endswith(name.lower()):
-                    d = {}
-                    d["mod_path"] = mod
-                    d["module"] = args._modules_dict[mod]
-                    d["name"] = name
-                    d["kwargs"] = kwargs
-                    d["start"] = f"_{val}"
-                    args.__dict__[f"_{val}"].append(d)
-                    all_used_modules.append(mod)
-
-    # Get medium modules
-    args.__dict__[f"_{n}_med"] = []
-    for mod in list(args._modules_dict.keys()):
-        if mod not in all_used_modules:
-            d = {}
-            d["mod_path"] = mod
-            d["module"] = args._modules_dict[mod]
-            d["name"] = name
-            d["kwargs"] = {}
-            d["start"] = f"_{n}_med"
-            args.__dict__[f"_{n}_med"].append(d)
-
-    # Get real order
-    args.__dict__[f"_{n}_order"] = []
-    for val in [f"_{n}_first", f"_{n}_med", f"_{n}_last"]:
-        for k in args.__dict__[val]:
-            args.__dict__[f"_{n}_order"].append(k)
 
 
 def agrs_parse(argv: List[Any], **kwargs: Any) -> SimpleNamespace:
@@ -131,10 +22,10 @@ def agrs_parse(argv: List[Any], **kwargs: Any) -> SimpleNamespace:
     import argparse
     import configparser
 
-    # Load all modules from location
-    _modules_dict = {}
-    _modules_dict.update(load_modules("modules/formater", pat=r".*\.py$"))
-    _modules_dict.update(load_modules("modules/saver", pat=r".*\.py$"))
+    # Load all plugins from entry_point
+    _plugins = {}
+    _plugins["formatter"] = load_modules_ep("autopep8_quotes.formatter")
+    _plugins["saver"] = load_modules_ep("autopep8_quotes.saver")
 
     # Prepare config file parser
     conf_parser = argparse.ArgumentParser(add_help=False)
@@ -151,24 +42,43 @@ def agrs_parse(argv: List[Any], **kwargs: Any) -> SimpleNamespace:
 
     # Set default arguments for function after parse
     defaults: Dict[str, Any] = {}
-    for key in _modules_dict:
-        _modules_dict[key].formatter().default_arguments(defaults)
+    for plugin_group in _plugins:
+        for plugin in _plugins[plugin_group]:
+            _plugins[plugin_group][plugin].apply.default_arguments(defaults)
+
     defaults["print_files"] = False
     defaults["debug"] = False
     defaults["show_args"] = False
     defaults["save_values_to_file"] = False
     defaults["recursive"] = False
     defaults["read_files_matching_pattern"] = [r".*\.py$"]
-    defaults["start_parse_first"] = "remove-string-u-prefix;lowercase-string-prefix"
-    defaults["start_parse_last"] = "normalize-string-quotes"
-    # 1. Check all files: is there any need of changes
+
+    # Apply on complete file, then next module
+    # 1. Check all file: is there any need of changes
     # 2. Save diff into file
     # 3. Print diff into terminal
     # 4. Make changes into independent file
     # 5. Make changes into source file (rewrite it)
-    # 6. Check all files: is there any need of changes (Exit code 1)
-    defaults["start_save_first"] = "check;diff-to-txt;diff;new-file"
-    defaults["start_save_last"] = "in-place;check-only"
+    # 6. Check files: is there any need of changes (Exit code 1)
+
+    # Algo work
+    # -> plugin_order_onfile(func1)
+    #  -> read file1 and apply
+    #    -> read token(1)
+    #      -> plugin_order_ontoken(func1)
+    #      -> plugin_order_ontoken(func2)
+    #    -> read token(2)
+    #      -> plugin_order_ontoken(func1)
+    #      -> plugin_order_ontoken(func2)
+    # -> apply saver function: plugin_order_onfile(func1)
+    # If there are some function that not defined either in order_onfile or order_ontoken
+    # then it run and onfile and ontoken, but between first and last list
+    defaults["plugin_order_onfile_first"] = "check-soft;diff-to-txt;diff"
+    defaults["plugin_order_onfile_last"] = "new-file;in-place;check-hard"
+
+    # Apply on each token
+    defaults["plugin_order_ontoken_first"] = """save-values-to-file[{"name": "before_change"}];remove-string-u-prefix;lowercase-string-prefix"""
+    defaults["plugin_order_ontoken_last"] = """normalize-string-quotes;save-values-to-file[{"name": "after_change"}]"""
 
     # Read config files
     cfg_files = []
@@ -214,7 +124,6 @@ def agrs_parse(argv: List[Any], **kwargs: Any) -> SimpleNamespace:
 
     parser.add_argument("--debug", action="store_true",
                         help="Show debug messages")
-
     parser.add_argument("--show-args", action="store_true",
                         help="Show readed args for script and exit")
     parser.add_argument("-r", "--recursive", action="store_true",
@@ -227,28 +136,23 @@ def agrs_parse(argv: List[Any], **kwargs: Any) -> SimpleNamespace:
                         help="Check only for filenames matching the pattern.")
 
     # Define order when run functions
-    parser.add_argument("--start-parse-first", type=str,
-                        help="Define order when run parse function (before undefined functions).")
-    parser.add_argument("--start-parse-last", type=str,
-                        help="Define order when run parse function (after undefined functions).")
-    parser.add_argument("--start-save-first", type=str,
-                        help="Define order when run save function (before undefined functions).")
-    parser.add_argument("--start-save-last", type=str,
-                        help="Define order when run save function (after undefined functions).")
-
-    # Define some addiotional functions: TODO: move to module
-    parser.add_argument("--save-values-to-file", action="store_true",
-                        help="Save all strings into file. "
-                        "All founded values before any reformatting, "
-                        "bad original values and error values when reformat them.")
+    parser.add_argument("--plugin-order-onfile-first", type=str,
+                        help="Define order of run functions on entire file (before undefined functions).")
+    parser.add_argument("--plugin-order-onfile-lase", type=str,
+                        help="Define order of run functions on entire file (after undefined functions).")
+    parser.add_argument("--plugin-order-ontoken-first", type=str,
+                        help="Define order of run functions on each string token (before undefined functions).")
+    parser.add_argument("--plugin-order-ontoken-lase", type=str,
+                        help="Define order of run functions on each string token (after undefined functions).")
 
     # Define files which should be parsed
     parser.add_argument("--files", nargs="+",
                         help="Files to format")
 
     # Add options like argparser.add_argument() from loaded modules
-    for key in _modules_dict:
-        _modules_dict[key].formatter().add_arguments(parser)
+    for plugin_group in _plugins:
+        for plugin in _plugins[plugin_group]:
+            _plugins[plugin_group][plugin].apply.add_arguments(parser)
 
     args_parsed, remaining_argv = parser.parse_known_args(remaining_argv)
     if remaining_argv:
@@ -264,18 +168,24 @@ def agrs_parse(argv: List[Any], **kwargs: Any) -> SimpleNamespace:
     args.__dict__.update(kwargs)
 
     # Add loaded modules to args
-    args._modules_dict = _modules_dict
+    args._plugins = _plugins
 
     # Transform string values into boolean
     str2bool_dict(defaults, args.__dict__)
 
     # Transform string values into list of order startup
-    parse_startup(args, "start_parse")
-    parse_startup(args, "start_save")
+    m_search = []
+    m_search.append("plugin_order_onfile_first")
+    m_search.append("plugin_order_onfile_last")
+    m_search.append("plugin_order_ontoken_first")
+    m_search.append("plugin_order_ontoken_last")
+    parse_startup(args, "plugin_order_onfile", ["formatter", "saver"], m_search)
+    parse_startup(args, "plugin_order_ontoken", ["formatter", "saver"], m_search)
 
     # Check: Can function be enabled to run in script or not (if conflict)
-    for key in _modules_dict:
-        _modules_dict[key].formatter().check_is_enabled(args)
+    for plugin_group in args._plugins:
+        for plugin in args._plugins[plugin_group]:
+            args._plugins[plugin_group][plugin].apply.check_is_enabled(args)
 
     # Add some basic values
     args._datetime_start = datetime.datetime.now()

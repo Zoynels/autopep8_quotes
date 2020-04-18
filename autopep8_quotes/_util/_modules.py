@@ -26,12 +26,12 @@ class main_formatter(object):
     @abstractmethod
     def add_arguments(self, parser: Any, **kwargs: Any) -> None:
         """Add options like argparser.add_argument()"""
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def default_arguments(self, defaults: Dict[str, Any], **kwargs: Any) -> None:
         """Set default args for argparser"""
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def parse(self, leaf: str, args: SimpleNamespace, token_dict: Dict[str, Any]) -> str:
@@ -49,6 +49,6 @@ class main_formatter(object):
         pass  # pragma: no cover
 
     @abstractmethod
-    def check_is_enabled(self, args: SimpleNamespace, **kwargs: Any) -> None:
+    def check_is_enabled(self, args: SimpleNamespace, **kwargs: Any) -> Any:
         """Check: Can be this function be enabled"""
-        pass
+        return False  # pragma: no cover

@@ -47,7 +47,22 @@ with open("README.md") as readme:
                        "License :: OSI Approved :: MIT License"],
           keywords="strings, formatter, style",
           entry_points={
-              "console_scripts": ["autopep8_quotes = autopep8_quotes.__init__:main"]},
+              "console_scripts": ["autopep8_quotes = autopep8_quotes.__init__:main"],
+              'autopep8_quotes.formatter': [
+                  'lowercase_string_prefix = autopep8_quotes.modules.formater.lowercase_string_prefix:formatter',
+                  'normalize_string_quotes = autopep8_quotes.modules.formater.normalize_string_quotes:formatter',
+                  'remove_string_u_prefix = autopep8_quotes.modules.formater.remove_string_u_prefix:formatter',
+                  'save_values_to_file = autopep8_quotes.modules.formater.save_values_to_file:formatter',
+              ],
+              'autopep8_quotes.saver': [
+                  'check_soft = autopep8_quotes.modules.saver.check_soft:formatter',
+                  'check_hard = autopep8_quotes.modules.saver.check_hard:formatter',
+                  'diff = autopep8_quotes.modules.saver.diff:formatter',
+                  'diff_to_txt = autopep8_quotes.modules.saver.diff_to_txt:formatter',
+                  'in_place = autopep8_quotes.modules.saver.in_place:formatter',
+                  'new_file = autopep8_quotes.modules.saver.new_file:formatter',
+              ],
+          },
           packages=["autopep8_quotes"],
           package_dir={"autopep8_quotes": "autopep8_quotes"},
           include_package_data=True,

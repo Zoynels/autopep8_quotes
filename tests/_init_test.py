@@ -8,17 +8,22 @@ from autopep8_quotes import _main
 
 def write_changeable_string(fname: str) -> None:
     test_str = b"""
-        a = ""\"A""\"
-        b = '''B'''
-        c = "C"
-        d = 'D'
-        e = ""
-        f = ''
-        g= ""\"""\"
-        h = ''''''
-        Z = ""
-        z = Z
-    """ # noqa
+a = ""\"A""\"
+b = '''B'''
+c = "C"
+d = 'D'
+e = ""
+f = ''
+g= ""\"""\"
+h = ''''''
+Z = ""
+z = Z
+z = 'n o q a 1' # noqa   
+z = 'n o q a 2' # something; noqa;
+z = 'n o q a 3' # noqa; something 
+
+""" # noqa
+
     with open(fname, "wb") as file:
         file.write(test_str)
 
@@ -44,10 +49,50 @@ def pytest_generate_tests(metafunc: Any) -> None:
         if key in metafunc.fixturenames:
             metafunc.parametrize(key, fix[key])
 
+@pytest.mark.basic  # type: ignore
+def test__show_args(standard_out: Any, standard_error: Any) -> None:
+    fname = "tests/good/tests_changeable_string_EXIT.py"
+    write_changeable_string(fname)
+
+    args = ["--show-args", f"--files={fname}"]
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        res = _main(args=args, standard_out=standard_out, standard_error=standard_error)
+    assert pytest_wrapped_e.type == SystemExit
+    errcode = 0
+    assert pytest_wrapped_e.value.code == 0
+    remove_file(fname)
 
 @pytest.mark.basic  # type: ignore
-def test__main(args: Any, standard_out: Any, standard_error: Any) -> None:
+def test__remaining_argv(standard_out: Any, standard_error: Any) -> None:
+    fname = "tests/good/tests_changeable_string_EXIT.py"
+    write_changeable_string(fname)
+
+    args = []
+    args.append("--HAHAHAH_remaining_argv_AHAHAHA")
+    args.append(f"--files={fname}")
     res = _main(args=args, standard_out=standard_out, standard_error=standard_error)
+    remove_file(fname)
+
+
+@pytest.mark.basic  # type: ignore
+def test__main(standard_out: Any, standard_error: Any) -> None:
+    fname = "tests/good/tests_changeable_string_MAIN.py"
+    write_changeable_string(fname)
+
+    args = []
+    args.append("--save-values-to-file")
+    args.append("--debug")
+    args.append("--diff")
+    args.append("--diff-to-txt")
+    args.append("--new-file")
+    args.append("--in-place")
+    args.append("--check")
+    args.append("--recursive")
+    args.append("--print-files")
+    args.append(f"--files={fname}")
+
+    res = _main(args=args, standard_out=standard_out, standard_error=standard_error)
+    remove_file(fname)
 
 
 @pytest.mark.basic  # type: ignore
@@ -63,7 +108,7 @@ def test__main_base(standard_out: Any, standard_error: Any) -> None:
     errcode = f"Error: --check-hard: need changes in file: {fname}"
     assert pytest_wrapped_e.value.code == errcode
 
-    # Soft check: need changes
+    # Soft check: no need changes
     args = ["--diff", "--diff-to-txt", "--new-file", "--in-place", "--check-soft", f"--files={fname}"]
     res = _main(args=args, standard_out=standard_out, standard_error=standard_error)
 
@@ -72,19 +117,6 @@ def test__main_base(standard_out: Any, standard_error: Any) -> None:
     res = _main(args=args, standard_out=standard_out, standard_error=standard_error)
     remove_file(fname)
 
-
-@pytest.mark.basic  # type: ignore
-def test__main_exit_v1(standard_out: Any, standard_error: Any) -> None:
-    fname = "tests/good/tests_changeable_string_EXIT.py"
-    write_changeable_string(fname)
-
-    args = ["--check-hard", f"--files={fname}"]
-    with pytest.raises(SystemExit) as pytest_wrapped_e:
-        res = _main(args=args, standard_out=standard_out, standard_error=standard_error)
-    assert pytest_wrapped_e.type == SystemExit
-    errcode = f"Error: --check-hard: need changes in file: {fname}"
-    assert pytest_wrapped_e.value.code == errcode
-    remove_file(fname)
 
 
 @pytest.mark.basic  # type: ignore
@@ -110,34 +142,23 @@ def test__main_no_file(standard_out: Any, standard_error: Any) -> None:
     fname = "tests/good/tests_changeable_string_EXIT.py"
     remove_file(fname)
 
-    args = ["--check-hard", f"--files={fname}"]
-    with pytest.raises(ValueError) as pytest_wrapped_e:
+    args = [f"--files={fname}"]
+    with pytest.raises(IOError) as pytest_wrapped_e:
         res = _main(args=args, standard_out=standard_out, standard_error=standard_error)
-    errcode = f"File is not exist: {fname}"
-    assert pytest_wrapped_e.value.args[0] == errcode
+    errcode = (2, f"File is not exist: {fname}")
+    assert pytest_wrapped_e.value.args == errcode
 
 
 @pytest.mark.basic  # type: ignore
-def test__main_show_args(standard_out: Any, standard_error: Any) -> None:
+def test__main_exit_check_hard(standard_out: Any, standard_error: Any) -> None:
     fname = "tests/good/tests_changeable_string_EXIT.py"
     write_changeable_string(fname)
 
-    args = ["--show-args", f"--files={fname}"]
+    args = ["--check-hard", f"--files={fname}"]
     with pytest.raises(SystemExit) as pytest_wrapped_e:
         res = _main(args=args, standard_out=standard_out, standard_error=standard_error)
     assert pytest_wrapped_e.type == SystemExit
-    errcode = 0
-    assert pytest_wrapped_e.value.code == 0
+    errcode = f"Error: --check-hard: need changes in file: {fname}"
+    assert pytest_wrapped_e.value.code == errcode
     remove_file(fname)
 
-
-@pytest.mark.basic  # type: ignore
-def test__main_remaining_argv(standard_out: Any, standard_error: Any) -> None:
-    fname = "tests/good/tests_changeable_string_EXIT.py"
-    write_changeable_string(fname)
-
-    args = []
-    args.append("--HAHAHAH_remaining_argv_AHAHAHA")
-    args.append(f"--files={fname}")
-    res = _main(args=args, standard_out=standard_out, standard_error=standard_error)
-    remove_file(fname)

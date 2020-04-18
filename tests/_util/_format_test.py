@@ -36,4 +36,4 @@ def test__save_values_to_file() -> None:
 
     input_list = [token_dict1, token_dict2, token_dict3]
 
-    util_format.save_values_to_file(input_list=input_list, args=args, name="test")
+    util_format.save_values_to_file(args=args, input_list=input_list, name="test")

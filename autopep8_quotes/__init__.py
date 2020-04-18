@@ -61,7 +61,8 @@ def _main(args: Any, standard_out: Any, standard_error: Any) -> int:
                 stdout_print(exception, otype="error")
                 failure_files_count += 1
         else:
-            raise ValueError(f"File is not exist: {name}")
+            from errno import ENOENT
+            raise IOError(ENOENT, f"File is not exist: {name}", name)
 
     if failure_files_count != 0:
         stdout_print(col_red + f"Error: read {read_files_count} source files with failure {failure_files_count}", otype="ok")
