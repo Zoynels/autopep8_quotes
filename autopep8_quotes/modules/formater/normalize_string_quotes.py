@@ -29,22 +29,29 @@ class quotes_codes(Enum):
 
 class formatter(main_formatter):
     def add_arguments(self, parser: Any, **kwargs: Any) -> None:
-        parser.add_argument("--normalize-string-quotes", action="store_true",
+        parser.add_argument("--normalize-string-quotes", "--nsq", 
+                            action="store_true",
                             help="Normalize all quotes to standart "
                                  "by options --multiline-quotes and --inline-quotes")
-        parser.add_argument("--inline-quotes",
+        parser.add_argument("--inline-quotes", "--nsq-inline-quotes", 
+                            choices=["'", '"'],
                             help="Preferred inline-quotes. "
-                            "Works only when --normalize-string-quotes is True",
-                            choices=["'", '"'])
-        parser.add_argument("--multiline-quotes",
+                            "Works only when --normalize-string-quotes is True")
+        parser.add_argument("--multiline-quotes", "--nsq-multiline-quotes", 
+                            choices=["'''", '"""'],
                             help="Preferred multiline-quotes. "
-                            "Works only when --normalize-string-quotes is True",
-                            choices=["'''", '"""'])
+                            "Works only when --normalize-string-quotes is True")
+        parser.add_argument("--nsq-log-transform",
+                            action="store_true",
+                            help="Log transform strings from normalize-string-quotes plugin. "
+                            "Works only when --normalize-string-quotes is True. ")
+
 
     def default_arguments(self, defaults: Dict[str, Any], **kwargs: Any) -> None:
         defaults["normalize_string_quotes"] = True
         defaults["inline_quotes"] = '"'
         defaults["multiline_quotes"] = '"""'
+        defaults["nsq_log_transform"] = False
 
     def check_is_enabled(self, args: SimpleNamespace, **kwargs: Any) -> Any:
         """Check: Can be this function be enabled"""
@@ -88,12 +95,14 @@ class formatter(main_formatter):
                     orig_quote = quotes[args.inline_quotes]
                     new_quote = args.inline_quotes
             else:
-                save_values_to_file(args=args, input_list=[token_dict], name="original__cant_detect_quote_type")
+                if args.nsq_log_transform:
+                    save_values_to_file(args=args, input_list=[token_dict], name="original__cant_detect_quote_type")
                 return leaf, quotes_codes.original__cant_detect_quote_type
 
             first_quote_pos = leaf.find(orig_quote)
             if first_quote_pos == -1:
-                save_values_to_file(args=args, input_list=[token_dict], name="original__cant_find_first_quote")
+                if args.nsq_log_transform:
+                    save_values_to_file(args=args, input_list=[token_dict], name="original__cant_find_first_quote")
                 return leaf, quotes_codes.original__cant_find_first_quote
 
             prefix = leaf[:first_quote_pos]
@@ -112,7 +121,8 @@ class formatter(main_formatter):
                 if unescaped_new_quote.search(body):
                     # There's at least one unescaped new_quote in this raw string
                     # so converting is impossible
-                    save_values_to_file(args=args, input_list=[token_dict], name="original__unescaped_quote_in_r_prefix")
+                    if args.nsq_log_transform:
+                        save_values_to_file(args=args, input_list=[token_dict], name="original__unescaped_quote_in_r_prefix")
                     return leaf, quotes_codes.original__unescaped_quote_in_r_prefix
 
                 # Do not introduce or remove backslashes in raw strings
@@ -143,7 +153,8 @@ class formatter(main_formatter):
                 for m in matches:
                     if "\\" in str(m):
                         # Do not introduce backslashes in interpolated expressions
-                        save_values_to_file(args=args, input_list=[token_dict], name="original__backslashes_in_expressions")
+                        if args.nsq_log_transform:
+                            save_values_to_file(args=args, input_list=[token_dict], name="original__backslashes_in_expressions")
                         return leaf, quotes_codes.original__backslashes_in_expressions
 
             if len(new_quote) == 3 and new_body[-1:] == new_quote[0]:
@@ -152,11 +163,13 @@ class formatter(main_formatter):
             orig_escape_count = body.count("\\")
             new_escape_count = new_body.count("\\")
             if new_escape_count > orig_escape_count:
-                save_values_to_file(args=args, input_list=[token_dict], name="original__do_not_introduce_more_escaping")
+                if args.nsq_log_transform:
+                    save_values_to_file(args=args, input_list=[token_dict], name="original__do_not_introduce_more_escaping")
                 return leaf, quotes_codes.original__do_not_introduce_more_escaping
 
             if new_escape_count == orig_escape_count and orig_quote == args.inline_quotes:
-                save_values_to_file(args=args, input_list=[token_dict], name="original__prefer_double_quotes")
+                if args.nsq_log_transform:
+                    save_values_to_file(args=args, input_list=[token_dict], name="original__prefer_double_quotes")
                 return leaf, quotes_codes.original__prefer_double_quotes
 
             return self.check_string(leaf, prefix, old_body, new_body, orig_quote, new_quote, args=args, token_dict=token_dict)
@@ -177,7 +190,8 @@ class formatter(main_formatter):
 
             if result_string is not None:
                 return result_string
-        save_values_to_file(args=args, input_list=[token_dict], name="leaf_None")
+        if args.nsq_log_transform:
+            save_values_to_file(args=args, input_list=[token_dict], name="leaf_None")
         return leaf
 
     def bruteforce_body(self, body: str, prefix: str, quote: str) -> str:
@@ -231,6 +245,8 @@ class formatter(main_formatter):
         v1 = f"{prefix}{new_quote}{new_body}{new_quote}"
         v2 = f"{prefix}{orig_quote}{new_body}{orig_quote}"
         if original == v1:
+            if args.nsq_log_transform:
+                save_values_to_file(args=args, input_list=[token_dict], name="original__equal")
             return original, quotes_codes.original__equal
 
         v0_res = isevaluatable(original, prefix)
@@ -241,7 +257,8 @@ class formatter(main_formatter):
             print("    " + self.color.red + f"Position:   {token_dict['pos']}")
             print("    " + self.color.red + f"String:     {token_dict['token_string']}")
             print("")
-            save_values_to_file(args=args, input_list=[token_dict], name="original__bad_value")
+            if args.nsq_log_transforn:
+                save_values_to_file(args=args, input_list=[token_dict], name="original__bad_value")
             return original, quotes_codes.original__bad_value
 
         v1_res = isevaluatable(v1, prefix)
@@ -249,6 +266,8 @@ class formatter(main_formatter):
         if v1_res[0] and (v1_res[1] == v0_res[1]):
             if args.debug:
                 print(self.color.red + f"Return v1: {v1}")
+            if args.nsq_log_transform:
+                save_values_to_file(args=args, input_list=[token_dict], name="changed__new_quote")
             return v1, quotes_codes.changed__new_quote
 
         v2_res = isevaluatable(v2, prefix)
@@ -256,7 +275,8 @@ class formatter(main_formatter):
         if v2_res[0] and (v2_res[1] == v0_res[1]):
             if args.debug:
                 print(self.color.red + f"Return v2: {v2}")
-            save_values_to_file(args=args, input_list=[token_dict], name="changed__old_quote")
+            if args.nsq_log_transform:
+                save_values_to_file(args=args, input_list=[token_dict], name="changed__old_quote")
             return v2, quotes_codes.changed__old_quote
 
         v3 = self.bruteforce_body(new_body, prefix, new_quote)
@@ -264,7 +284,8 @@ class formatter(main_formatter):
         if v3_res[0] and (v3_res[1] == v0_res[1]):
             if args.debug:
                 print(self.color.red + f"Return v3: {v3}")
-            save_values_to_file(args=args, input_list=[token_dict], name="changed__quote_bruteforce")
+            if args.nsq_log_transform:
+                save_values_to_file(args=args, input_list=[token_dict], name="changed__quote_bruteforce")
             return v3, quotes_codes.changed__quote_bruteforce
 
         return self.check_string__cant_transform(original, v1, v2, args, token_dict)
@@ -285,5 +306,6 @@ class formatter(main_formatter):
         print("        " + self.color.red + f"Try v1:     {v1}")
         print("        " + self.color.red + f"Try v2:     {v2}")
         print("")
-        save_values_to_file(args=args, input_list=[token_dict], name="original__cant_transform")
+        if args.nsq_log_transform:
+            save_values_to_file(args=args, input_list=[token_dict], name="original__cant_transform")
         return original, quotes_codes.original__cant_transform

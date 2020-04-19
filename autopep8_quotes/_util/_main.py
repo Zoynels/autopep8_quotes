@@ -71,15 +71,18 @@ def format_code(source: str, args: SimpleNamespace, filename: str) -> Any:
 
 def search_comment_code(line: str, search: str = "noqa") -> bool:
     sio = io.StringIO(line)
-    for token in tokenize.generate_tokens(sio.readline):
-        if token.type == tokenize.COMMENT:
-            t = token.string.lower().strip().strip("#;, \t\n\r")
-            if t == search:
-                return True
-            elif t.endswith(search):
-                return True
-            elif t.startswith(search):
-                return True
+    try:
+        for token in tokenize.generate_tokens(sio.readline):
+            if token.type == tokenize.COMMENT:
+                t = token.string.lower().strip().strip("#;, \t\n\r")
+                if t == search:
+                    return True
+                elif t.endswith(search):
+                    return True
+                elif t.startswith(search):
+                    return True
+    except:
+        return True
     return False
 
 
