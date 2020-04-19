@@ -156,7 +156,8 @@ def agrs_parse(argv: List[Any], **kwargs: Any) -> SimpleNamespace:
 
     args_parsed, remaining_argv = parser.parse_known_args(remaining_argv)
     if remaining_argv:
-        print(f"Warning: Unrecognized arguments: {remaining_argv}")
+        print(f"Warning: Unrecognized arguments transform to --files: {remaining_argv}")
+        args.files = args.files + remaining_argv
 
     ###################################################################
     # After prepare args we add some calculateble variables and modules
