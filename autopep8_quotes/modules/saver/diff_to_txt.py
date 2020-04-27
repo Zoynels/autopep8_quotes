@@ -8,12 +8,12 @@ from autopep8_quotes._util._modules import main_formatter
 
 
 class formatter(main_formatter):
-    def add_arguments(self, parser: Any, **kwargs: Any) -> None:
+    def add_arguments(self, parser: Any, *_args: Any, **kwargs: Any) -> None:
         parser.add_argument("-t", "--diff-to-txt", action="store_true",
                             help="Save changes into txt file. "
                             "Real changes can be applied by other modules. ")
 
-    def default_arguments(self, defaults: Dict[str, Any], **kwargs: Any) -> None:
+    def default_arguments(self, defaults: Dict[str, Any], *_args: Any, **kwargs: Any) -> None:
         defaults["diff_to_txt"] = False
 
     def show_or_save(self,
@@ -41,6 +41,6 @@ class formatter(main_formatter):
                 return "return", True
         return "continue"
 
-    def check_is_enabled(self, args: SimpleNamespace, **kwargs: Any) -> Any:
+    def check_is_enabled(self, args: SimpleNamespace, *_args: Any, **kwargs: Any) -> Any:
         """Check: Can be this function be enabled"""
         return args.diff_to_txt

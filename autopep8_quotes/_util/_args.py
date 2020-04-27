@@ -128,3 +128,52 @@ def parse_startup(args: SimpleNamespace, n: str, groups: Union[str, List[str]], 
     for val in [f"_{n}_first", f"_{n}_med", f"_{n}_last"]:
         for k in args.__dict__[val]:
             args.__dict__[f"_{n}_order"].append(k)
+
+
+def get_order_plugins_list(args, L, all_plugins):
+    used_plugins = []
+    for order in L:
+        for plugin_desc in args.__dict__[order]:
+            try:
+                name = plugin_desc.get("name", "")
+                name = name.replace("-", "_").lower()
+                if name in all_plugins:
+                    used_plugins.append(name)
+            except:
+                pass
+    return list(set(used_plugins))
+
+
+def get_order_unused(used_plugins, all_plugins):
+    med = []
+    for x in all_plugins:
+        if x not in used_plugins:
+            med.append({"name": str(x)})
+    return med
+
+
+def get_order_123(args, L, func_default=None, func_set=None):
+    order = []
+    for i in L:
+        for plugin_desc in args.__dict__[i]:
+            if "name" not in plugin_desc:
+                continue
+
+            d = SimpleNamespace()
+            d.__dict__.update(plugin_desc)
+            d.name = d.name.replace("-", "_").lower()
+            
+            if "args" not in d.__dict__:
+                d.args = ()
+
+            if "kwargs" not in d.__dict__:
+                d.kwargs = {}
+                
+            if "func" not in d.__dict__:
+                if func_default is not None:
+                    d.func = func_default
+            if func_set is not None:
+                d.func = func_default
+
+            order.append(d)
+    return order

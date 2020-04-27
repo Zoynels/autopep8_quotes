@@ -70,7 +70,10 @@ def test__remaining_argv(standard_out: Any, standard_error: Any) -> None:
     args = []
     args.append("--HAHAHAH_remaining_argv_AHAHAHA")
     args.append(f"--files={fname}")
-    res = _main(args=args, standard_out=standard_out, standard_error=standard_error)
+    with pytest.raises(IOError) as pytest_wrapped_e:
+        res = _main(args=args, standard_out=standard_out, standard_error=standard_error)
+    errcode = (2, f"File is not exist: --HAHAHAH_remaining_argv_AHAHAHA")
+    assert pytest_wrapped_e.value.args == errcode
     remove_file(fname)
 
 

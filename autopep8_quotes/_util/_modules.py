@@ -24,12 +24,12 @@ class main_formatter(object):
         self.color.magenta = col_magenta
 
     @abstractmethod
-    def add_arguments(self, parser: Any, **kwargs: Any) -> None:
+    def add_arguments(self, parser: Any, *_args: Any, **kwargs: Any) -> None:
         """Add options like argparser.add_argument()"""
         pass  # pragma: no cover
 
     @abstractmethod
-    def default_arguments(self, defaults: Dict[str, Any], **kwargs: Any) -> None:
+    def default_arguments(self, defaults: Dict[str, Any], *_args: Any, **kwargs: Any) -> None:
         """Set default args for argparser"""
         pass  # pragma: no cover
 
@@ -49,6 +49,17 @@ class main_formatter(object):
         pass  # pragma: no cover
 
     @abstractmethod
-    def check_is_enabled(self, args: SimpleNamespace, **kwargs: Any) -> Any:
+    def check_is_enabled(self, args: SimpleNamespace, *_args: Any, **kwargs: Any) -> Any:
         """Check: Can be this function be enabled"""
         return False  # pragma: no cover
+
+    @abstractmethod
+    def run_pass(self, *_args: Any, **kwargs: Any) -> None:
+        """Check: Can be this function be enabled"""
+        pass # pragma: no cover
+
+    @abstractmethod
+    def return_self(self, *_args: Any, **kwargs: Any) -> None:
+        """Check: Can be this function be enabled"""
+        return self # pragma: no cover
+

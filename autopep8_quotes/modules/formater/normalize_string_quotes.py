@@ -28,7 +28,7 @@ class quotes_codes(Enum):
 
 
 class formatter(main_formatter):
-    def add_arguments(self, parser: Any, **kwargs: Any) -> None:
+    def add_arguments(self, parser: Any, *_args: Any, **kwargs: Any) -> None:
         parser.add_argument("--normalize-string-quotes", "--nsq", 
                             action="store_true",
                             help="Normalize all quotes to standart "
@@ -47,13 +47,13 @@ class formatter(main_formatter):
                             "Works only when --normalize-string-quotes is True. ")
 
 
-    def default_arguments(self, defaults: Dict[str, Any], **kwargs: Any) -> None:
+    def default_arguments(self, defaults: Dict[str, Any], *_args: Any, **kwargs: Any) -> None:
         defaults["normalize_string_quotes"] = True
         defaults["inline_quotes"] = '"'
         defaults["multiline_quotes"] = '"""'
         defaults["nsq_log_transform"] = False
 
-    def check_is_enabled(self, args: SimpleNamespace, **kwargs: Any) -> Any:
+    def check_is_enabled(self, args: SimpleNamespace, *_args: Any, **kwargs: Any) -> Any:
         """Check: Can be this function be enabled"""
         return args.normalize_string_quotes
 

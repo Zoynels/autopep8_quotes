@@ -22,8 +22,10 @@ def format_file(args: SimpleNamespace) -> Any:
     args._read_file_need_load = True
 
     result: List[Any] = [False]
-    for plugin in args._plugin_order_onfile_order:
-        if not plugin.apply.check_is_enabled(args):
+
+    for onfile_dict in args._plugin_order_onfile_order:
+        onfile_plugin = args._plugins_manager.plugins[onfile_dict.name].plugin()
+        if not onfile_plugin.check_is_enabled(args):
             continue
 
         if args._read_file_need_load:
@@ -41,8 +43,8 @@ def format_file(args: SimpleNamespace) -> Any:
 
         result = [False]
         if source != formatted_source:
-            func = plugin.apply.show_or_save
-            res = func(args, source, formatted_source, **plugin.kwargs)
+            func = onfile_plugin.show_or_save
+            res = func(args, source, formatted_source, *onfile_dict.args, **onfile_dict.kwargs)
             if res is None:
                 pass
             elif isinstance(res, (list, tuple)):
@@ -100,15 +102,14 @@ def _format_code(source: str, args: SimpleNamespace, filename: str) -> Any:
                 pass
                 # no check/reformat line
             else:
-                for plugin in args._plugin_order_ontoken_order:
+                for ontoken_dict in args._plugin_order_ontoken_order:
+                    ontoken_plugin = args._plugins_manager.plugins[ontoken_dict.name].plugin()
+
                     token_dict = get_token_dict(token_type, token_string, start, end, line, filename)
 
-                    if not plugin.apply.check_is_enabled(args):
+                    if not ontoken_plugin.check_is_enabled(args):
                         continue
-                    #print("args._plugin_order_ontoken_order", plugin.name)
-                    #print("before: ", token_string)
-                    token_string = plugin.apply.parse(token_string, args=args, token_dict=token_dict, **plugin.kwargs)
-                    #print("after:  ", token_string)
+                    token_string = ontoken_plugin.parse(token_string, args=args, token_dict=token_dict, *ontoken_dict.args, **ontoken_dict.kwargs)
 
         modified_tokens.append((token_type, token_string, start, end, line))
 

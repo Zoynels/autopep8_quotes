@@ -1,31 +1,41 @@
 ﻿import datetime
 import os
 import pathlib
-import sys
+import sys, json
 from types import SimpleNamespace
 from typing import Any
 from typing import Dict
 from typing import List
+import logging
+LOG = logging.getLogger(__name__)
 
 from autopep8_quotes import __doc__
 from autopep8_quotes import __title_name__
 from autopep8_quotes import __version__
 from autopep8_quotes._util._args import parse_startup
 from autopep8_quotes._util._args import str2bool_dict
+from autopep8_quotes._util import _args as _util_args
+
 from autopep8_quotes._util._io import load_modules_ep
+from autopep8_quotes.plugin.manager import PluginManager
+
 
 __read_sections__ = ["pep8", "flake8", "autopep8", "autopep8_quotes"]
 
 
-def agrs_parse(argv: List[Any], **kwargs: Any) -> SimpleNamespace:
+def agrs_parse(argv: List[Any], *_args: Any, **kwargs: Any) -> SimpleNamespace:
     """Main function to parse basic args of cli"""
     import argparse
     import configparser
 
     # Load all plugins from entry_point
-    _plugins = {}
-    _plugins["formatter"] = load_modules_ep("autopep8_quotes.formatter")
-    _plugins["saver"] = load_modules_ep("autopep8_quotes.saver")
+    #_plugins = {}
+    #_plugins["formatter"] = load_modules_ep("autopep8_quotes.formatter")
+    #_plugins["saver"] = load_modules_ep("autopep8_quotes.saver")
+
+    plugins = PluginManager()
+    plugins.load_global("autopep8_quotes.formatter", label="formatter")
+    plugins.load_global("autopep8_quotes.saver", label="saver")
 
     # Prepare config file parser
     conf_parser = argparse.ArgumentParser(add_help=False)
@@ -41,10 +51,12 @@ def agrs_parse(argv: List[Any], **kwargs: Any) -> SimpleNamespace:
     args_parsed, remaining_argv = conf_parser.parse_known_args(argv)
 
     # Set default arguments for function after parse
+
     defaults: Dict[str, Any] = {}
-    for plugin_group in _plugins:
-        for plugin in _plugins[plugin_group]:
-            _plugins[plugin_group][plugin].apply.default_arguments(defaults)
+    plugins.map_all(func="default_arguments", defaults=defaults)
+    #for plugin_group in _plugins:
+    #    for plugin in _plugins[plugin_group]:
+    #        _plugins[plugin_group][plugin].apply.default_arguments(defaults)
 
     defaults["print_files"] = False
     defaults["debug"] = False
@@ -73,12 +85,12 @@ def agrs_parse(argv: List[Any], **kwargs: Any) -> SimpleNamespace:
     # -> apply saver function: plugin_order_onfile(func1)
     # If there are some function that not defined either in order_onfile or order_ontoken
     # then it run and onfile and ontoken, but between first and last list
-    defaults["plugin_order_onfile_first"] = "check-soft;diff-to-txt;diff"
-    defaults["plugin_order_onfile_last"] = "new-file;in-place;check-hard"
+    defaults["plugin_order_onfile_first"] = """[{"name": "check-soft"}, {"name": "diff-to-txt"}, {"name": "diff"}]"""
+    defaults["plugin_order_onfile_last"] = """[{"name": "new-file"}, {"name": "in-place"}, {"name": "check-hard"}]"""
 
     # Apply on each token
-    defaults["plugin_order_ontoken_first"] = """save-values-to-file[{"name": "before_change"}];remove-string-u-prefix;lowercase-string-prefix"""
-    defaults["plugin_order_ontoken_last"] = """normalize-string-quotes;save-values-to-file[{"name": "after_change"}]"""
+    defaults["plugin_order_ontoken_first"] = """[{"name": "save-values-to-file", "kwargs": {"name": "before_change"}}, {"name": "remove-string-u-prefix"}, {"name": "lowercase-string-prefix"}]"""
+    defaults["plugin_order_ontoken_last"] = """[{"name": "normalize-string-quotes"}, {"name": "save-values-to-file", "kwargs": {"name": "after_change"}}]"""
 
     # Read config files
     cfg_files = []
@@ -103,10 +115,10 @@ def agrs_parse(argv: List[Any], **kwargs: Any) -> SimpleNamespace:
                     _dict = {str(k).replace("-", "_").lower(): v for (k, v) in _dict.items()}
                     str2bool_dict(defaults, _dict)
                     defaults.update(_dict)
-                except Exception as e:
-                    pass
-        except Exception as e:
-            pass
+                except BaseException as e:
+                    LOG.warning(f"Pass exception when read section '{sec}' in config_file: '{f}', {e}")
+        except BaseException as e:
+            LOG.critical(f"Pass exception when read config_file: '{f}', {e}")
 
     # Prepare argv parser which inherit data from config parser
     parser = argparse.ArgumentParser(
@@ -150,14 +162,17 @@ def agrs_parse(argv: List[Any], **kwargs: Any) -> SimpleNamespace:
                         help="Files to format")
 
     # Add options like argparser.add_argument() from loaded modules
-    for plugin_group in _plugins:
-        for plugin in _plugins[plugin_group]:
-            _plugins[plugin_group][plugin].apply.add_arguments(parser)
+    plugins.map_all(func="add_arguments", parser=parser)
+    #for plugin_group in _plugins:
+    #    for plugin in _plugins[plugin_group]:
+    #        _plugins[plugin_group][plugin].apply.add_arguments(parser)
 
     args_parsed, remaining_argv = parser.parse_known_args(remaining_argv)
     if remaining_argv:
         print(f"Warning: Unrecognized arguments transform to --files: {remaining_argv}")
-        args.files = args.files + remaining_argv
+        if args_parsed.files is None:
+            args_parsed.files = []
+        args_parsed.files = args_parsed.files + remaining_argv
 
     ###################################################################
     # After prepare args we add some calculateble variables and modules
@@ -169,7 +184,7 @@ def agrs_parse(argv: List[Any], **kwargs: Any) -> SimpleNamespace:
     args.__dict__.update(kwargs)
 
     # Add loaded modules to args
-    args._plugins = _plugins
+    #args._plugins = _plugins
 
     # Transform string values into boolean
     str2bool_dict(defaults, args.__dict__)
@@ -180,13 +195,40 @@ def agrs_parse(argv: List[Any], **kwargs: Any) -> SimpleNamespace:
     m_search.append("plugin_order_onfile_last")
     m_search.append("plugin_order_ontoken_first")
     m_search.append("plugin_order_ontoken_last")
-    parse_startup(args, "plugin_order_onfile", ["formatter", "saver"], m_search)
-    parse_startup(args, "plugin_order_ontoken", ["formatter", "saver"], m_search)
+    #parse_startup(args, "plugin_order_onfile", ["formatter", "saver"], m_search)
+    #parse_startup(args, "plugin_order_ontoken", ["formatter", "saver"], m_search)
+
+
+    all_plugins = list(plugins.select_by().keys())
+
+    _F = "_plugin_order_onfile_first"
+    _M = "_plugin_order_onfile_med"
+    _L = "_plugin_order_onfile_last"
+    _O = "_plugin_order_onfile_order"
+    args.__dict__[_F] = json.loads(args.__dict__[_F[1:]])
+    args.__dict__[_L] = json.loads(args.__dict__[_L[1:]])
+    used_plugins = _util_args.get_order_plugins_list(args=args, L=[_F, _L], all_plugins=all_plugins)
+    args.__dict__[_M] = _util_args.get_order_unused(used_plugins=used_plugins, all_plugins=all_plugins)
+    args.__dict__[_O] = _util_args.get_order_123(args=args, L=[_F, _M, _L], func_set="return_self")
+
+
+    _F = "_plugin_order_ontoken_first"
+    _M = "_plugin_order_ontoken_med"
+    _L = "_plugin_order_ontoken_last"
+    _O = "_plugin_order_ontoken_order"
+    args.__dict__[_F] = json.loads(args.__dict__[_F[1:]])
+    args.__dict__[_L] = json.loads(args.__dict__[_L[1:]])
+    used_plugins = _util_args.get_order_plugins_list(args=args, L=[_F, _L], all_plugins=all_plugins)
+    args.__dict__[_M] = _util_args.get_order_unused(used_plugins=used_plugins, all_plugins=all_plugins)
+    args.__dict__[_O] = _util_args.get_order_123(args=args, L=[_F, _M, _L], func_set="return_self")
+
+    args._plugins_manager = plugins
 
     # Check: Can function be enabled to run in script or not (if conflict)
-    for plugin_group in args._plugins:
-        for plugin in args._plugins[plugin_group]:
-            args._plugins[plugin_group][plugin].apply.check_is_enabled(args)
+    plugins.map_all(func="check_is_enabled", args=args)
+    #for plugin_group in args._plugins:
+    #    for plugin in args._plugins[plugin_group]:
+    #        args._plugins[plugin_group][plugin].apply.check_is_enabled(args)
 
     # Add some basic values
     args._datetime_start = datetime.datetime.now()

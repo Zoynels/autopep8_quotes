@@ -6,14 +6,14 @@ from autopep8_quotes._util._modules import main_formatter
 
 
 class formatter(main_formatter):
-    def add_arguments(self, parser: Any, **kwargs: Any) -> None:
+    def add_arguments(self, parser: Any, *_args: Any, **kwargs: Any) -> None:
         parser.add_argument("-cs", "--check-soft", "--check", action="store_true",
                             help="Check if any changes are still needed. "
                             "Compare source on start and formatted code when finish run all modules. "
                             "Even if all changes were made before check == changes is needed. "
                             "Check all files and print list of files that need changes. ")
 
-    def default_arguments(self, defaults: Dict[str, Any], **kwargs: Any) -> None:
+    def default_arguments(self, defaults: Dict[str, Any], *_args: Any, **kwargs: Any) -> None:
         defaults["check_soft"] = False
 
     def show_or_save(self,
@@ -29,6 +29,6 @@ class formatter(main_formatter):
             return "return", True
         return "continue"
 
-    def check_is_enabled(self, args: SimpleNamespace, **kwargs: Any) -> Any:
+    def check_is_enabled(self, args: SimpleNamespace, *_args: Any, **kwargs: Any) -> Any:
         """Check: Can be this function be enabled"""
         return args.check_soft

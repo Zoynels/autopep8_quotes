@@ -231,7 +231,29 @@ def test_agrs_parse_v2() -> None:
 
 
 @pytest.mark.basic  # type: ignore
-def test_agrs_parse_v3() -> None:
+def test_autodetect_config_file__dir() -> None:
+    argv = []
+    argv.append("--autodetect-config-file=tests/")
+
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        args = agrs_parse(argv=argv)
+    assert pytest_wrapped_e.type == SystemExit
+    errcode = 0
+    assert pytest_wrapped_e.value.code == 0
+
+@pytest.mark.basic  # type: ignore
+def test_autodetect_config_file__file_instead_dir() -> None:
+    argv = []
+    argv.append("--autodetect-config-file=tests/not_exist_file.ini")
+
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        args = agrs_parse(argv=argv)
+    assert pytest_wrapped_e.type == SystemExit
+    errcode = 0
+    assert pytest_wrapped_e.value.code == 0
+
+@pytest.mark.basic  # type: ignore
+def test_config_file__normal(caplog) -> None:
     argv = []
     argv.append("--config-file=tests/config_test.ini")
 
@@ -241,14 +263,27 @@ def test_agrs_parse_v3() -> None:
     errcode = 0
     assert pytest_wrapped_e.value.code == 0
 
+    L = []
+    L.append(["WARNING", f"""Pass exception when read section """])
+    for L_item in L:
+        found = False
+        for record in caplog.records:
+            if (record.levelname == L_item[0]) and (str(record.message).startswith(L_item[1])):
+                found = True
+        assert found
 
 @pytest.mark.basic  # type: ignore
-def test_agrs_parse_v4() -> None:
+def test_config_file__broken(caplog) -> None:
     argv = []
-    argv.append("--autodetect-config-file=tests/")
+    argv.append("--config-file=tests/config_broken.ini")
 
-    with pytest.raises(SystemExit) as pytest_wrapped_e:
-        args = agrs_parse(argv=argv)
-    assert pytest_wrapped_e.type == SystemExit
-    errcode = 0
-    assert pytest_wrapped_e.value.code == 0
+    args = agrs_parse(argv=argv)
+
+    L = []
+    L.append(["CRITICAL", f"""Pass exception when read config_file: 'tests/config_broken.ini', Source contains parsing errors:"""])
+    for L_item in L:
+        found = False
+        for record in caplog.records:
+            if (record.levelname == L_item[0]) and (str(record.message).startswith(L_item[1])):
+                found = True
+        assert found
