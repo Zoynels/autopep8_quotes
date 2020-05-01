@@ -2,6 +2,7 @@
 from types import SimpleNamespace
 from typing import Any
 from typing import List
+from typing import Union
 
 import tokenize
 import untokenize  # type: ignore
@@ -62,7 +63,7 @@ def format_file(args: SimpleNamespace) -> Any:
 
 def format_code(source: str, args: SimpleNamespace, filename: str) -> Any:
     """Return source code with quotes unified."""
-    if search_comment_code(source, search="flake8: noqa"):
+    if search_comment_code(source, search="flake8: noqa", filename=filename):
         # no check/reformat entire file
         return source
     try:
@@ -71,20 +72,41 @@ def format_code(source: str, args: SimpleNamespace, filename: str) -> Any:
         return source
 
 
-def search_comment_code(line: str, search: str = "noqa") -> bool:
+def prepare_tokens(line: str) -> Any:
     sio = io.StringIO(line)
-    try:
-        for token in tokenize.generate_tokens(sio.readline):
-            if token.type == tokenize.COMMENT:
-                t = token.string.lower().strip().strip("#;, \t\n\r")
-                if t == search:
-                    return True
-                elif t.endswith(search):
-                    return True
-                elif t.startswith(search):
-                    return True
-    except:
-        return True
+
+    all_tokens = list(tokenize.generate_tokens(sio.readline))
+
+    L = {}
+    for x in all_tokens:
+        endsline = x.end[0]
+        if endsline not in L:
+            L[endsline] = []
+        L[endsline].append(x)
+    for endsline in L:
+        for x in L[endsline]:
+            yield x, L[endsline]
+
+
+def search_comment_code(line: Union[str, List[Any]], filename: str, search: str = "noqa") -> bool:
+    if isinstance(line, str):
+        sio = io.StringIO(line)
+        try:
+            all_tokens = list(tokenize.generate_tokens(sio.readline))
+        except BaseException as e:
+            return True
+    else:
+        all_tokens = line
+
+    for token in all_tokens:
+        if token.type == tokenize.COMMENT:
+            t = token.string.lower().strip().strip("#;, \t\n\r")
+            if t == search:
+                return True
+            elif t.endswith(search):
+                return True
+            elif t.startswith(search):
+                return True
     return False
 
 
@@ -94,23 +116,22 @@ def _format_code(source: str, args: SimpleNamespace, filename: str) -> Any:
         return source
 
     modified_tokens = []
-    sio = io.StringIO(source)
 
-    for (token_type, token_string, start, end, line) in tokenize.generate_tokens(sio.readline):
-        if token_type == tokenize.STRING:
-            if search_comment_code(line, search="noqa"):
+    for token, line_tokens in prepare_tokens(source):
+        if token.type == tokenize.STRING:
+            if search_comment_code(line_tokens, search="noqa", filename=filename):
                 pass
                 # no check/reformat line
             else:
                 for ontoken_dict in args._plugin_order_ontoken_order:
                     ontoken_plugin = args._plugins_manager.plugins[ontoken_dict.name].plugin()
-
-                    token_dict = get_token_dict(token_type, token_string, start, end, line, filename)
-
                     if not ontoken_plugin.check_is_enabled(args):
                         continue
-                    token_string = ontoken_plugin.parse(token_string, args=args, token_dict=token_dict, *ontoken_dict.args, **ontoken_dict.kwargs)
 
-        modified_tokens.append((token_type, token_string, start, end, line))
+                    token_dict = get_token_dict(token.type, token.string, token.start, token.end, token.line, filename)
+                    token = ontoken_plugin.parse(token=token, line_tokens=line_tokens, args=args, token_dict=token_dict,
+                                                 _args=ontoken_dict.args, kwargs=ontoken_dict.kwargs)
+
+        modified_tokens.append((token.type, token.string, token.start, token.end, token.line))
 
     return untokenize.untokenize(modified_tokens)

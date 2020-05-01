@@ -3,7 +3,10 @@ from enum import Enum
 from types import SimpleNamespace
 from typing import Any
 from typing import Dict
+from typing import List
 from typing import Tuple
+
+import tokenize
 
 from autopep8_quotes._util._format import isevaluatable
 from autopep8_quotes._util._format import save_values_to_file
@@ -29,15 +32,15 @@ class quotes_codes(Enum):
 
 class formatter(main_formatter):
     def add_arguments(self, parser: Any, *_args: Any, **kwargs: Any) -> None:
-        parser.add_argument("--normalize-string-quotes", "--nsq", 
+        parser.add_argument("--normalize-string-quotes", "--nsq",
                             action="store_true",
                             help="Normalize all quotes to standart "
                                  "by options --multiline-quotes and --inline-quotes")
-        parser.add_argument("--inline-quotes", "--nsq-inline-quotes", 
+        parser.add_argument("--inline-quotes", "--nsq-inline-quotes",
                             choices=["'", '"'],
                             help="Preferred inline-quotes. "
                             "Works only when --normalize-string-quotes is True")
-        parser.add_argument("--multiline-quotes", "--nsq-multiline-quotes", 
+        parser.add_argument("--multiline-quotes", "--nsq-multiline-quotes",
                             choices=["'''", '"""'],
                             help="Preferred multiline-quotes. "
                             "Works only when --normalize-string-quotes is True")
@@ -45,7 +48,6 @@ class formatter(main_formatter):
                             action="store_true",
                             help="Log transform strings from normalize-string-quotes plugin. "
                             "Works only when --normalize-string-quotes is True. ")
-
 
     def default_arguments(self, defaults: Dict[str, Any], *_args: Any, **kwargs: Any) -> None:
         defaults["normalize_string_quotes"] = True
@@ -57,7 +59,13 @@ class formatter(main_formatter):
         """Check: Can be this function be enabled"""
         return args.normalize_string_quotes
 
-    def parse(self, leaf: str, args: SimpleNamespace, token_dict: Dict[str, Any]) -> str:
+    def parse(self, token: tokenize.TokenInfo,
+              line_tokens: List[tokenize.TokenInfo],
+              args: SimpleNamespace,
+              token_dict: Dict[str, Any],
+              *_args: Any,
+              **kwargs: Any
+              ) -> tokenize.TokenInfo:
         """Prefer quotes but only if it doesn't cause more escaping.
 
         Adds or removes backslashes as appropriate.
@@ -175,24 +183,26 @@ class formatter(main_formatter):
             return self.check_string(leaf, prefix, old_body, new_body, orig_quote, new_quote, args=args, token_dict=token_dict)
 
         if args.normalize_string_quotes:
-            result_string, code = parse(leaf, args=args, token_dict=token_dict, change_quote=False)
+            result_string, code = parse(token.string, args=args, token_dict=token_dict, change_quote=False)
             if code == quotes_codes.changed__quote_bruteforce:
                 # Try to change quote """ => ''' and vice versa
-                result_string_v2, code_v2 = parse(leaf, args=args, token_dict=token_dict, change_quote=True)
+                result_string_v2, code_v2 = parse(token.string, args=args, token_dict=token_dict, change_quote=True)
                 if code_v2 in [quotes_codes.changed__old_quote, quotes_codes.changed__new_quote]:
                     result_string, code = result_string_v2, code_v2
 
             if args.debug:
                 print("normalize_string_quotes: ")
                 print("    code:          ", code)
-                print("    input_sting:   ", leaf)
+                print("    input_sting:   ", token.string)
                 print("    result_string: ", result_string)
 
             if result_string is not None:
-                return result_string
+                token = tokenize.TokenInfo(type=token.type, string=result_string, start=token.start, end=token.end, line=token.line)
+                return token
+
         if args.nsq_log_transform:
             save_values_to_file(args=args, input_list=[token_dict], name="nsq-leaf_None")
-        return leaf
+        return token
 
     def bruteforce_body(self, body: str, prefix: str, quote: str) -> str:
         """Escape symbol by symbol to get new_body"""
