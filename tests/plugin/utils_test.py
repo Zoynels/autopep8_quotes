@@ -1,16 +1,14 @@
+import argparse
 from types import SimpleNamespace
 from typing import Any
 from typing import Dict
-import argparse
-from types import SimpleNamespace
-
-
-from autopep8_quotes.plugin.manager import PluginManager
-from autopep8_quotes.plugin.plugin import FailedToLoadPlugin, __prog__name__
-from autopep8_quotes.plugin import utils
 
 import pytest
 
+from autopep8_quotes.plugin import utils
+from autopep8_quotes.plugin.manager import PluginManager
+from autopep8_quotes.plugin.plugin import FailedToLoadPlugin
+from autopep8_quotes.plugin.plugin import __prog__name__
 
 
 def test_check_re():
@@ -44,6 +42,7 @@ def test_check_equal():
     assert utils.check_equal(value=None, search=None, none_is_true=True)
     assert utils.check_equal(value=None, search=None, none_is_true=False)
 
+
 def test_to_list():
     a = SimpleNamespace()
     a.tester = "123"
@@ -56,6 +55,7 @@ def test_to_list():
     assert utils.to_list(dict_to_keys=False, value=a) == list(a.__dict__)
     assert utils.to_list(dict_to_keys=True, value=a.__dict__) == list(a.__dict__.keys())
     assert utils.to_list(dict_to_keys=False, value=a.__dict__) == list(a.__dict__)
+
 
 def test_get_module():
     a = PluginManager()

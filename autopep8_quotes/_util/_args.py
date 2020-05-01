@@ -3,6 +3,7 @@ from types import SimpleNamespace
 from typing import Any
 from typing import Dict
 from typing import List
+from typing import Optional
 from typing import Set
 from typing import Union
 
@@ -130,7 +131,7 @@ def parse_startup(args: SimpleNamespace, n: str, groups: Union[str, List[str]], 
             args.__dict__[f"_{n}_order"].append(k)
 
 
-def get_order_plugins_list(args, L, all_plugins):
+def get_order_plugins_list(args: SimpleNamespace, L: List[str], all_plugins: List[str]) -> List[str]:
     used_plugins = []
     for order in L:
         for plugin_desc in args.__dict__[order]:
@@ -139,12 +140,12 @@ def get_order_plugins_list(args, L, all_plugins):
                 name = name.replace("-", "_").lower()
                 if name in all_plugins:
                     used_plugins.append(name)
-            except:
+            except BaseException:
                 pass
     return list(set(used_plugins))
 
 
-def get_order_unused(used_plugins, all_plugins):
+def get_order_unused(used_plugins: List[str], all_plugins: List[str]) -> List[Dict[str, str]]:
     med = []
     for x in all_plugins:
         if x not in used_plugins:
@@ -152,7 +153,7 @@ def get_order_unused(used_plugins, all_plugins):
     return med
 
 
-def get_order_123(args, L, func_default=None, func_set=None):
+def get_order_123(args: SimpleNamespace, L: List[str], func_default: Optional[str] = None, func_set: Optional[str] = None) -> List[SimpleNamespace]:
     order = []
     for i in L:
         for plugin_desc in args.__dict__[i]:
@@ -162,13 +163,13 @@ def get_order_123(args, L, func_default=None, func_set=None):
             d = SimpleNamespace()
             d.__dict__.update(plugin_desc)
             d.name = d.name.replace("-", "_").lower()
-            
+
             if "args" not in d.__dict__:
                 d.args = ()
 
             if "kwargs" not in d.__dict__:
                 d.kwargs = {}
-                
+
             if "func" not in d.__dict__:
                 if func_default is not None:
                     d.func = func_default

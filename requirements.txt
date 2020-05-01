@@ -1,3 +1,3 @@
-untokenize>=0.1.1
+﻿untokenize>=0.1.1
 entrypoints>=0.3
--e h:/github.com/Zoynels/zs_pluginmanager/zs_pluginmanager/
+file://h:/github.com/Zoynels/ZS_PluginManager#egg=ZS_PluginManager

@@ -44,7 +44,7 @@ def pytest_generate_tests(metafunc):
     # a+: Opens a file for both appending and reading.
     # ab+: Opens a file for both appending and reading in binary mode.
 
-    #nullify  files
+    # nullify  files
     #fix["mode"] = ["r", "rb", "r+", "w", "wb", "w+", "wb+", "a", "ab", "a+", "ab+"]
     fix["mode"] = ["r", "rb", "r+"]
 

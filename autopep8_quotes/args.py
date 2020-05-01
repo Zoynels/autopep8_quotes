@@ -1,23 +1,23 @@
 ﻿import datetime
+import json
+import logging
 import os
 import pathlib
-import sys, json
+import sys
 from types import SimpleNamespace
 from typing import Any
 from typing import Dict
 from typing import List
-import logging
-LOG = logging.getLogger(__name__)
+
+from zs_pluginmanager.manager import PluginManager
 
 from autopep8_quotes import __doc__
 from autopep8_quotes import __title_name__
 from autopep8_quotes import __version__
-from autopep8_quotes._util._args import parse_startup
-from autopep8_quotes._util._args import str2bool_dict
 from autopep8_quotes._util import _args as _util_args
+from autopep8_quotes._util._args import str2bool_dict
 
-from autopep8_quotes._util._io import load_modules_ep
-from autopep8_quotes.plugin.manager import PluginManager
+LOG = logging.getLogger(__name__)
 
 
 __read_sections__ = ["pep8", "flake8", "autopep8", "autopep8_quotes"]
@@ -27,11 +27,6 @@ def agrs_parse(argv: List[Any], *_args: Any, **kwargs: Any) -> SimpleNamespace:
     """Main function to parse basic args of cli"""
     import argparse
     import configparser
-
-    # Load all plugins from entry_point
-    #_plugins = {}
-    #_plugins["formatter"] = load_modules_ep("autopep8_quotes.formatter")
-    #_plugins["saver"] = load_modules_ep("autopep8_quotes.saver")
 
     plugins = PluginManager()
     plugins.load_global("autopep8_quotes.formatter", label="formatter")
@@ -54,9 +49,6 @@ def agrs_parse(argv: List[Any], *_args: Any, **kwargs: Any) -> SimpleNamespace:
 
     defaults: Dict[str, Any] = {}
     plugins.map_all(func="default_arguments", defaults=defaults)
-    #for plugin_group in _plugins:
-    #    for plugin in _plugins[plugin_group]:
-    #        _plugins[plugin_group][plugin].apply.default_arguments(defaults)
 
     defaults["print_files"] = False
     defaults["debug"] = False
@@ -72,25 +64,18 @@ def agrs_parse(argv: List[Any], *_args: Any, **kwargs: Any) -> SimpleNamespace:
     # 4. Make changes into independent file
     # 5. Make changes into source file (rewrite it)
     # 6. Check files: is there any need of changes (Exit code 1)
-
-    # Algo work
-    # -> plugin_order_onfile(func1)
-    #  -> read file1 and apply
-    #    -> read token(1)
-    #      -> plugin_order_ontoken(func1)
-    #      -> plugin_order_ontoken(func2)
-    #    -> read token(2)
-    #      -> plugin_order_ontoken(func1)
-    #      -> plugin_order_ontoken(func2)
-    # -> apply saver function: plugin_order_onfile(func1)
-    # If there are some function that not defined either in order_onfile or order_ontoken
-    # then it run and onfile and ontoken, but between first and last list
     defaults["plugin_order_onfile_first"] = """[{"name": "check-soft"}, {"name": "diff-to-txt"}, {"name": "diff"}]"""
     defaults["plugin_order_onfile_last"] = """[{"name": "new-file"}, {"name": "in-place"}, {"name": "check-hard"}]"""
 
     # Apply on each token
-    defaults["plugin_order_ontoken_first"] = """[{"name": "save-values-to-file", "kwargs": {"name": "before_change"}}, {"name": "remove-string-u-prefix"}, {"name": "lowercase-string-prefix"}]"""
-    defaults["plugin_order_ontoken_last"] = """[{"name": "normalize-string-quotes"}, {"name": "save-values-to-file", "kwargs": {"name": "after_change"}}]"""
+    defaults["plugin_order_ontoken_first"] = "["
+    defaults["plugin_order_ontoken_first"] += '{"name": "save-values-to-file", "kwargs": {"name": "before_change"}}, '
+    defaults["plugin_order_ontoken_first"] += '{"name": "remove-string-u-prefix"}, '
+    defaults["plugin_order_ontoken_first"] += '{"name": "lowercase-string-prefix"} '
+    defaults["plugin_order_ontoken_first"] += "]"
+
+    defaults["plugin_order_ontoken_last"] = """[{"name": "normalize-string-quotes"}, """ + \
+        """{"name": "save-values-to-file", "kwargs": {"name": "after_change"}}]"""
 
     # Read config files
     cfg_files = []
@@ -163,9 +148,6 @@ def agrs_parse(argv: List[Any], *_args: Any, **kwargs: Any) -> SimpleNamespace:
 
     # Add options like argparser.add_argument() from loaded modules
     plugins.map_all(func="add_arguments", parser=parser)
-    #for plugin_group in _plugins:
-    #    for plugin in _plugins[plugin_group]:
-    #        _plugins[plugin_group][plugin].apply.add_arguments(parser)
 
     args_parsed, remaining_argv = parser.parse_known_args(remaining_argv)
     if remaining_argv:
@@ -183,22 +165,10 @@ def agrs_parse(argv: List[Any], *_args: Any, **kwargs: Any) -> SimpleNamespace:
     args.__dict__.update(args_parsed.__dict__)
     args.__dict__.update(kwargs)
 
-    # Add loaded modules to args
-    #args._plugins = _plugins
-
     # Transform string values into boolean
     str2bool_dict(defaults, args.__dict__)
 
     # Transform string values into list of order startup
-    m_search = []
-    m_search.append("plugin_order_onfile_first")
-    m_search.append("plugin_order_onfile_last")
-    m_search.append("plugin_order_ontoken_first")
-    m_search.append("plugin_order_ontoken_last")
-    #parse_startup(args, "plugin_order_onfile", ["formatter", "saver"], m_search)
-    #parse_startup(args, "plugin_order_ontoken", ["formatter", "saver"], m_search)
-
-
     all_plugins = list(plugins.select_by().keys())
 
     _F = "_plugin_order_onfile_first"
@@ -211,7 +181,6 @@ def agrs_parse(argv: List[Any], *_args: Any, **kwargs: Any) -> SimpleNamespace:
     args.__dict__[_M] = _util_args.get_order_unused(used_plugins=used_plugins, all_plugins=all_plugins)
     args.__dict__[_O] = _util_args.get_order_123(args=args, L=[_F, _M, _L], func_set="return_self")
 
-
     _F = "_plugin_order_ontoken_first"
     _M = "_plugin_order_ontoken_med"
     _L = "_plugin_order_ontoken_last"
@@ -222,13 +191,11 @@ def agrs_parse(argv: List[Any], *_args: Any, **kwargs: Any) -> SimpleNamespace:
     args.__dict__[_M] = _util_args.get_order_unused(used_plugins=used_plugins, all_plugins=all_plugins)
     args.__dict__[_O] = _util_args.get_order_123(args=args, L=[_F, _M, _L], func_set="return_self")
 
+    # Add loaded modules to args
     args._plugins_manager = plugins
 
     # Check: Can function be enabled to run in script or not (if conflict)
     plugins.map_all(func="check_is_enabled", args=args)
-    #for plugin_group in args._plugins:
-    #    for plugin in args._plugins[plugin_group]:
-    #        args._plugins[plugin_group][plugin].apply.check_is_enabled(args)
 
     # Add some basic values
     args._datetime_start = datetime.datetime.now()

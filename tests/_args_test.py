@@ -6,10 +6,10 @@ from typing import List
 
 import pytest  # type: ignore
 
-from autopep8_quotes.args import agrs_parse
 from autopep8_quotes._util._args import parse_startup
 from autopep8_quotes._util._args import str2bool
 from autopep8_quotes._util._args import str2bool_dict
+from autopep8_quotes.args import agrs_parse
 
 testdata_str2bool = []
 testdata_str2bool.append(("YES", True))
@@ -78,19 +78,21 @@ def test_parse_startup() -> None:
     class SimpleFallback():
         def __getattr__(self, name: str) -> Any:
             return SimpleFallback
+
         @property
         def loaded(self) -> Any:
             return SimpleFallback
+
         @property
         def apply(self) -> Any:
             return SimpleFallback()
-    
+
     args = SimpleNamespace()
-    args.__dict__["plugin_order_onfile_first"] = '''check-soft[{"a":"1"}];check-soft[{"z":"0"}];check-soft;diff-to-txt;diff'''
+    args.__dict__["plugin_order_onfile_first"] = """check-soft[{"a":"1"}];check-soft[{"z":"0"}];check-soft;diff-to-txt;diff"""
     args.__dict__["plugin_order_onfile_last"] = "new-file;in-place;check-hard"
     args.__dict__["plugin_order_ontoken_first"] = "check;remove-string-u-prefix;lowercase-string-prefix"
     args.__dict__["plugin_order_ontoken_last"] = "normalize-string-quotes"
-    
+
     args.__dict__["_plugins"] = {}
     args.__dict__["_plugins"]["formatter"] = {
         "mod.path:remove_string_u_prefix": SimpleFallback().remove_string_u_prefix,
@@ -110,17 +112,17 @@ def test_parse_startup() -> None:
         "mod.path:something_else_saver": SimpleFallback().something_else_saver,
         "mod.path:something_same": SimpleFallback().something_same,
     }
-    
+
     m_search = []
     m_search.append("plugin_order_onfile_first")
     m_search.append("plugin_order_onfile_last")
     m_search.append("plugin_order_ontoken_first")
     m_search.append("plugin_order_ontoken_last")
-    
+
     parse_startup(args, "plugin_order_onfile", ["formatter", "saver"], m_search)
     parse_startup(args, "plugin_order_ontoken", ["formatter", "saver"], m_search)
 
-    #for x in args._plugin_order_onfile_order:
+    # for x in args._plugin_order_onfile_order:
     #    print(x["name"], x["kwargs"])
 
     # Have result of function
@@ -241,6 +243,7 @@ def test_autodetect_config_file__dir() -> None:
     errcode = 0
     assert pytest_wrapped_e.value.code == 0
 
+
 @pytest.mark.basic  # type: ignore
 def test_autodetect_config_file__file_instead_dir() -> None:
     argv = []
@@ -251,6 +254,7 @@ def test_autodetect_config_file__file_instead_dir() -> None:
     assert pytest_wrapped_e.type == SystemExit
     errcode = 0
     assert pytest_wrapped_e.value.code == 0
+
 
 @pytest.mark.basic  # type: ignore
 def test_config_file__normal(caplog) -> None:
@@ -271,6 +275,7 @@ def test_config_file__normal(caplog) -> None:
             if (record.levelname == L_item[0]) and (str(record.message).startswith(L_item[1])):
                 found = True
         assert found
+
 
 @pytest.mark.basic  # type: ignore
 def test_config_file__broken(caplog) -> None:

@@ -22,7 +22,7 @@ z = 'n o q a 1' # noqa
 z = 'n o q a 2' # something; noqa;
 z = 'n o q a 3' # noqa; something 
 
-""" # noqa
+"""  # noqa
 
     with open(fname, "wb") as file:
         file.write(test_str)
@@ -49,6 +49,7 @@ def pytest_generate_tests(metafunc: Any) -> None:
         if key in metafunc.fixturenames:
             metafunc.parametrize(key, fix[key])
 
+
 @pytest.mark.basic  # type: ignore
 def test__show_args(standard_out: Any, standard_error: Any) -> None:
     fname = "tests/good/tests_changeable_string_EXIT.py"
@@ -61,6 +62,7 @@ def test__show_args(standard_out: Any, standard_error: Any) -> None:
     errcode = 0
     assert pytest_wrapped_e.value.code == 0
     remove_file(fname)
+
 
 @pytest.mark.basic  # type: ignore
 def test__remaining_argv(standard_out: Any, standard_error: Any) -> None:
@@ -121,7 +123,6 @@ def test__main_base(standard_out: Any, standard_error: Any) -> None:
     remove_file(fname)
 
 
-
 @pytest.mark.basic  # type: ignore
 def test__main_exit_not_recursive(standard_out: Any, standard_error: Any) -> None:
     fname = "tests/good/"
@@ -164,4 +165,3 @@ def test__main_exit_check_hard(standard_out: Any, standard_error: Any) -> None:
     errcode = f"Error: --check-hard: need changes in file: {fname}"
     assert pytest_wrapped_e.value.code == errcode
     remove_file(fname)
-

@@ -3,6 +3,9 @@ from abc import abstractmethod
 from types import SimpleNamespace
 from typing import Any
 from typing import Dict
+from typing import List
+
+import tokenize
 
 from autopep8_quotes._util._colorama import col_green
 from autopep8_quotes._util._colorama import col_magenta
@@ -34,9 +37,15 @@ class main_formatter(object):
         pass  # pragma: no cover
 
     @abstractmethod
-    def parse(self, leaf: str, args: SimpleNamespace, token_dict: Dict[str, Any]) -> str:
+    def parse(self, token: tokenize.TokenInfo,
+              line_tokens: List[tokenize.TokenInfo],
+              args: SimpleNamespace,
+              token_dict: Dict[str, Any],
+              *_args: Any,
+              **kwargs: Any
+              ) -> tokenize.TokenInfo:
         """Action on token"""
-        return leaf  # pragma: no cover
+        return token  # pragma: no cover
 
     @abstractmethod
     def show_or_save(self,
@@ -56,10 +65,9 @@ class main_formatter(object):
     @abstractmethod
     def run_pass(self, *_args: Any, **kwargs: Any) -> None:
         """Check: Can be this function be enabled"""
-        pass # pragma: no cover
+        pass  # pragma: no cover
 
     @abstractmethod
-    def return_self(self, *_args: Any, **kwargs: Any) -> None:
+    def return_self(self, *_args: Any, **kwargs: Any) -> "main_formatter":
         """Check: Can be this function be enabled"""
-        return self # pragma: no cover
-
+        return self  # pragma: no cover

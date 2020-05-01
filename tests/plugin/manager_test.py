@@ -1,15 +1,15 @@
+import argparse
 from types import SimpleNamespace
 from typing import Any
 from typing import Dict
-import argparse
-from types import SimpleNamespace
-
-
-from autopep8_quotes.plugin.manager import PluginManager
-from autopep8_quotes.plugin.plugin import FailedToLoadPlugin, __prog__name__
-from autopep8_quotes.plugin import utils
 
 import pytest
+
+from autopep8_quotes.plugin import utils
+from autopep8_quotes.plugin.manager import PluginManager
+from autopep8_quotes.plugin.plugin import FailedToLoadPlugin
+from autopep8_quotes.plugin.plugin import __prog__name__
+
 
 def test_global():
     # Load by adding new plugins
@@ -28,7 +28,6 @@ def test_global_map():
     a.load_global(namespace="autopep8_quotes.saver")
 
     a.map_all(func="show_or_save", args=SimpleNamespace(), source="", formatted_source="")
-    
 
 
 def test_load_onestep():
@@ -37,7 +36,7 @@ def test_load_onestep():
     a.load_local(["Local:MyTestPlugin1 = plugin._plugin1:formatter", "Local:MyTestPlugin2 = plugin._plugin2:formatter"], path="..")
 
     # Check ALL
-    L = ['Local:MyTestPlugin1', 'Local:MyTestPlugin2']
+    L = ["Local:MyTestPlugin1", "Local:MyTestPlugin2"]
     assert list(a.select_by(stype="all", namespace="").keys()) == L
 
 
@@ -48,8 +47,9 @@ def test_load_twostep():
     a.load_local(["Local:MyTestPlugin2 = plugin._plugin2:formatter"], path="..")
 
     # Check
-    L = ['Local:MyTestPlugin1', 'Local:MyTestPlugin2']
+    L = ["Local:MyTestPlugin1", "Local:MyTestPlugin2"]
     assert list(a.select_by(stype="all", namespace="").keys()) == L
+
 
 def test_load_not_callable(capsys, caplog):
     a = PluginManager()
@@ -62,14 +62,15 @@ def test_load_not_callable(capsys, caplog):
 
     __prog__name__
     L = []
-    L.append(["CRITICAL", f"""Plugin 'some string' is not a callable. It might be written for an older version of {__prog__name__} and might not work with this version"""])
-    L.append(["ERROR", f"""Plugin 'some string' is not a callable. It might be written for an older version of {__prog__name__} and might not work with this version"""])
+    L.append(
+        ["CRITICAL", f"""Plugin 'some string' is not a callable. It might be written for an older version of {__prog__name__} and might not work with this version"""])
+    L.append(
+        ["ERROR", f"""Plugin 'some string' is not a callable. It might be written for an older version of {__prog__name__} and might not work with this version"""])
     L.append(["CRITICAL", f"""{__prog__name__} failed to load plugin "Local:MyTestPlugin3" due to Plugin 'some string' is not a callable. It might be written for an older version of {__prog__name__} and might not work with this version."""])
     L.append(["ERROR", f"""{__prog__name__} failed to load plugin "Local:MyTestPlugin3" due to Plugin 'some string' is not a callable. It might be written for an older version of {__prog__name__} and might not work with this version."""])
     for i, record in enumerate(caplog.records):
         assert record.levelname == L[i][0]
         assert str(record.message) == L[i][1]
-
 
 
 def test_load_not_exist():
@@ -79,9 +80,8 @@ def test_load_not_exist():
     a.load_local(["Unexistent string for entry_point"], path="..")
 
     # Check
-    L = ['Local:MyTestPlugin1', 'Local:MyTestPlugin2']
+    L = ["Local:MyTestPlugin1", "Local:MyTestPlugin2"]
     assert list(a.select_by().keys()) == L
-
 
 
 def test_select_by():
@@ -91,11 +91,11 @@ def test_select_by():
     a.load_local(["Local:MyTestPlugin2 = plugin._plugin2:formatter"], path="..")
 
     # Check ALL
-    L = ['Local:MyTestPlugin1', 'Local:MyTestPlugin2']
+    L = ["Local:MyTestPlugin1", "Local:MyTestPlugin2"]
     assert list(a.select_by(stype="all", namespace="").keys()) == L
 
     # Check ANY
-    L = ['Local:MyTestPlugin1', 'Local:MyTestPlugin2']
+    L = ["Local:MyTestPlugin1", "Local:MyTestPlugin2"]
     assert list(a.select_by(stype="any", name_re="Local:MyTestPlugin", name="Local:MyTestPlugin2").keys()) == L
 
     # Select without conditions
@@ -114,11 +114,13 @@ def test_group():
     assert a.plugins["Local:MyTest.Plugin1"].group == "Local:MyTest"
     assert a.plugins["Local:MyTest.Plugin2"].group == "Local:MyTest"
 
+
 def test_to_dictionary():
     a = PluginManager()
     a.load_local(["Local:MyTest.Plugin1 = plugin._plugin1:formatter"], path="..", label="123")
 
-    assert list(a.plugins["Local:MyTest.Plugin1"].to_dictionary().keys()) == ['namespace', 'name', 'label', 'parameters', 'parameter_names', 'plugin', 'plugin_name', 'group']
+    assert list(a.plugins["Local:MyTest.Plugin1"].to_dictionary().keys()) == ["namespace", "name",
+                                                                              "label", "parameters", "parameter_names", "plugin", "plugin_name", "group"]
 
     _dict = a.plugins["Local:MyTest.Plugin1"].to_dictionary()
     assert _dict["name"] == "Local:MyTest.Plugin1"
@@ -158,7 +160,6 @@ def test_argparse(capsys):
     assert captured.out == "TestPlugin1 CLI__set_defaults\n"
     assert captured.err == ""
 
-
     captured = capsys.readouterr()
 
     # CONFIG parser
@@ -195,7 +196,6 @@ def test_map_all(capsys, caplog):
     assert captured.out == "TestPlugin1 parse\nTestPlugin2 parse\n"
     assert captured.err == ""
 
-
     # map_all function of plugin class which is not exist
     captured = capsys.readouterr()
     a.map_all(func="parse_not_exist", leaf="somestr", args=SimpleNamespace(), token_dict={})
@@ -213,9 +213,9 @@ def test_map_all(capsys, caplog):
     assert captured.out == ""
     assert captured.err == ""
 
-
     # map external function with plugin as argument
     captured = capsys.readouterr()
+
     def mapfunc(plugin, *args, **kwargs):
         print("Run mapfunc", plugin.name)
         return kwargs["a"] + kwargs["b"]
@@ -227,6 +227,7 @@ def test_map_all(capsys, caplog):
 
     # map_all external function with plugin as argument
     captured = capsys.readouterr()
+
     def mapfunc(plugin, *args, **kwargs):
         print("Run mapfunc", plugin.name)
         return kwargs["a"] + kwargs["b"]
@@ -235,7 +236,6 @@ def test_map_all(capsys, caplog):
     captured = capsys.readouterr()
     assert captured.out == "Run mapfunc Local:MyTestPlugin1\n" + "Run mapfunc Local:MyTestPlugin2\n"
     assert captured.err == ""
-
 
     # map_all with partial selection
     captured = capsys.readouterr()
@@ -262,14 +262,13 @@ def test_map_all(capsys, caplog):
     assert captured.err == ""
 
 
-
 def test_version():
     a = PluginManager()
     a.load_local(["Local:MyTest.Plugin1 = plugin._plugin1:formatter"], path="..")
     a.load_local(["Local:MyTest.Plugin2 = plugin._plugin2:formatter"], path="..")
     a.load_local(["Local:MyTestPlugin2 = plugin._plugin2:formatter"], path="..")
 
-    assert list(a.versions()) == [('Local:MyTest', '1.0.0'), ('TestPlugin2', '2.0.0')]
+    assert list(a.versions()) == [("Local:MyTest", "1.0.0"), ("TestPlugin2", "2.0.0")]
 
     assert a.plugins["Local:MyTest.Plugin1"].version_for(a.plugins["Local:MyTest.Plugin1"]) == "1.0.0"
     assert a.plugins["Local:MyTest.Plugin2"].version_for(a.plugins["Local:MyTest.Plugin2"]) == "2.0.0"
@@ -280,5 +279,5 @@ def test_repr():
     a = PluginManager()
     a.load_local(["Local:MyTestPlugin1 = plugin._plugin1:formatter"], path="..")
     a.load_local(["Local:MyTestPlugin2 = plugin._plugin2:formatter"], path="..")
-    assert repr(a.plugins["Local:MyTestPlugin1"]) == """Plugin(name=Local:MyTestPlugin1, entry_point=EntryPoint('Local:MyTestPlugin1', 'plugin._plugin1', 'formatter', None))"""
-
+    assert repr(a.plugins["Local:MyTestPlugin1"]
+                ) == """Plugin(name=Local:MyTestPlugin1, entry_point=EntryPoint('Local:MyTestPlugin1', 'plugin._plugin1', 'formatter', None))"""

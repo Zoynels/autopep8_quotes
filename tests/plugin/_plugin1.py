@@ -2,11 +2,12 @@ from types import SimpleNamespace
 from typing import Any
 from typing import Dict
 
-__version__ = '1.0.0'
+__version__ = "1.0.0"
+
 
 class formatter(object):
-    name = 'TestPlugin1'
-    version = '1.0.0'
+    name = "TestPlugin1"
+    version = "1.0.0"
 
     def __init__(self) -> None:
         pass

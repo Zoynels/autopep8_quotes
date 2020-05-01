@@ -1,10 +1,10 @@
 import io
 import os
 import sys
+from types import SimpleNamespace
 from typing import Any
 from typing import Pattern
 from typing import Union
-from types import SimpleNamespace
 
 import pytest  # type: ignore
 
@@ -21,11 +21,13 @@ abc = "xyz"
     filename = "no_file"
     assert source == _main.format_code(source=source, args=args, filename=filename)
 
+
 def test_format_code__None():
     source = None
     args = SimpleNamespace()
     filename = "no_file"
     assert source == _main.format_code(source=source, args=args, filename=filename)
+
 
 def test_format_code__tokenizer_error():
     filename = "tests/good/tokenize_error.py"
