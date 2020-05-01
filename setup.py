@@ -57,6 +57,7 @@ with open("README.md") as readme:
                   "normalize_string_quotes = autopep8_quotes.modules.formater.normalize_string_quotes:formatter",
                   "remove_string_u_prefix = autopep8_quotes.modules.formater.remove_string_u_prefix:formatter",
                   "save_values_to_file = autopep8_quotes.modules.formater.save_values_to_file:formatter",
+                  "remove_empty_lines_spaces = autopep8_quotes.modules.formater.remove_empty_lines_spaces:formatter",
               ],
               "autopep8_quotes.saver": [
                   "check_soft = autopep8_quotes.modules.saver.check_soft:formatter",
