@@ -169,7 +169,7 @@ def agrs_parse(argv: List[Any], *_args: Any, **kwargs: Any) -> SimpleNamespace:
     str2bool_dict(defaults, args.__dict__)
 
     # Transform string values into list of order startup
-    all_plugins = list(plugins.select_by().keys())
+    all_plugins = [x.name for x in plugins]
 
     _F = "_plugin_order_onfile_first"
     _M = "_plugin_order_onfile_med"

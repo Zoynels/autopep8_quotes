@@ -25,7 +25,7 @@ def format_file(args: SimpleNamespace) -> Any:
     result: List[Any] = [False]
 
     for onfile_dict in args._plugin_order_onfile_order:
-        onfile_plugin = args._plugins_manager.plugins[onfile_dict.name].plugin()
+        onfile_plugin = args._plugins_manager.filter(name=onfile_dict.name).index(0).plugin()
         if not onfile_plugin.check_is_enabled(args):
             continue
 
@@ -89,6 +89,8 @@ def prepare_tokens(line: str) -> Any:
 
 
 def search_comment_code(line: Union[str, List[Any]], filename: str, search: str = "noqa") -> bool:
+    if line is None:
+        return True
     if isinstance(line, str):
         sio = io.StringIO(line)
         try:
@@ -124,7 +126,7 @@ def _format_code(source: str, args: SimpleNamespace, filename: str) -> Any:
                 # no check/reformat line
             else:
                 for ontoken_dict in args._plugin_order_ontoken_order:
-                    ontoken_plugin = args._plugins_manager.plugins[ontoken_dict.name].plugin()
+                    ontoken_plugin = args._plugins_manager.filter(name=ontoken_dict.name).index(0).plugin()
                     if not ontoken_plugin.check_is_enabled(args):
                         continue
 
