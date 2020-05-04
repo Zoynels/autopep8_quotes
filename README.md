@@ -1,10 +1,12 @@
 # autopep8_quotes
 
+[![codecov](https://codecov.io/gh/Zoynels/autopep8_quotes/branch/master/graph/badge.svg?token=LJS5MWQZVB)](https://codecov.io/gh/Zoynels/autopep8_quotes)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+
 Unify strings to all use the same quote where possible.  
 Unify all prefixex to lowercase where possible.  
 Remove u"" prefixes where possible.  
-
-[![codecov](https://codecov.io/gh/Zoynels/autopep8_quotes/branch/master/graph/badge.svg?token=LJS5MWQZVB)](https://codecov.io/gh/Zoynels/autopep8_quotes)
+Remove spaces in empty lines.  
 
 ## CLI
 
