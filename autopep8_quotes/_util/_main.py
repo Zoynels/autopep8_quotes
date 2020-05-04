@@ -1,6 +1,7 @@
 ﻿import io
 from types import SimpleNamespace
 from typing import Any
+from typing import Dict
 from typing import List
 from typing import Union
 
@@ -77,7 +78,7 @@ def prepare_tokens(line: str) -> Any:
 
     all_tokens = list(tokenize.generate_tokens(sio.readline))
 
-    L = {}
+    L: Dict[Any, Any] = {}
     for x in all_tokens:
         endsline = x.end[0]
         if endsline not in L:
