@@ -37,7 +37,8 @@ jobs:
     - name: Test with tox
       run: tox
 
-    - name: Create Artifact
+    - name: The job has succeeded
+      if: ${{ failure() }}
       uses: actions/upload-artifact@v1
       with:
         name: create-artifact-logs
