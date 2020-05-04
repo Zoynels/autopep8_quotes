@@ -31,21 +31,3 @@ jobs:
     - name: Test with tox
       run: tox
 
-    - name: Create packages
-      run: python setup.py sdist bdist_wheel
-    - uses: actions/upload-artifact@master
-      with:
-        name: create-artifact-dist
-        path: dist
-
-    - name: Create coverage.xml
-    - uses: actions/upload-artifact@master
-      with:
-        name: create-artifact-coverage
-        path: ./coverage.xml
-
-    - name: Upload coverage to Codecov  
-    - uses: codecov/codecov-action@v1
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        file: ./coverage.xml
