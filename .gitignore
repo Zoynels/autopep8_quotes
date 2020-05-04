@@ -1,3 +1,4 @@
+.local_files
 *.pyc
 *.autopep8_quotes
 .*.swp
