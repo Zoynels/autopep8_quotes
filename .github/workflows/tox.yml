@@ -30,18 +30,11 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade setuptools pip wheel
+        # python -m pip install --upgrade setuptools pip wheel
         # Use the latest published version
         python -m pip install tox-gh-actions
 
     - name: Test with tox
-      run: tox
-
-    - name: The job has succeeded
-      if: ${{ failure() }}
-      uses: actions/upload-artifact@v1
-      with:
-        name: create-artifact-logs
-        path: .tox/checkonly/log
+      run: tox -v -v -v -v -v
 
 
