@@ -33,6 +33,7 @@ jobs:
         # python -m pip install --upgrade setuptools pip wheel
         # Use the latest published version
         python -m pip install tox-gh-actions
+        python -m pip install ZS_PluginManager-0.0.1-py3-none-any.whl
 
     - name: Test with tox
       run: tox -v -v -v -v -v
