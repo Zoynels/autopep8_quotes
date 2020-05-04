@@ -10,6 +10,7 @@ import tokenize
 from autopep8_quotes._util._colorama import col_green
 from autopep8_quotes._util._colorama import col_magenta
 from autopep8_quotes._util._colorama import col_red
+from autopep8_quotes._util._colorama import col_reset
 from autopep8_quotes._util._io import open_with_encoding
 from autopep8_quotes._util._io import stdout_print
 
@@ -25,6 +26,7 @@ class main_formatter(object):
         self.color.green = col_green
         self.color.red = col_red
         self.color.magenta = col_magenta
+        self.color.reset = col_reset
 
     @abstractmethod
     def add_arguments(self, parser: Any, *_args: Any, **kwargs: Any) -> None:

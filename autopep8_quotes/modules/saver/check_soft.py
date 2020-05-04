@@ -25,7 +25,8 @@ class formatter(main_formatter):
         """Actions with result"""
         if source != formatted_source:
             if args.check_soft:
-                self.stdout_print("\n    " + self.color.red + f"check-soft: need changes in file: {args._read_filename}", otype=args._standard_out)
+                txt = self.color.red + f"check-soft: need changes in file: {args._read_filename}" + self.color.reset
+                self.stdout_print("\n    " + txt, otype=args._standard_out)
             return "return", True
         return "continue"
 
