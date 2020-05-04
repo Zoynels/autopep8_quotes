@@ -1,15 +1,8 @@
-include LICENSE
-include *.rst
-include *.toml
-include *.txt
-include *.yml
-include *.bat
-include *.yaml
-include Makefile
-include LICENSE
-include .coveragerc
+include *.whl
 include tox.ini
+include LICENSE
+include README
 include requirements.txt
-include requirements_test.txt
+include setup.py
+include autopep8_quotes/py.typed
 recursive-include autopep8_quotes *.py
-recursive-include tests *.py
