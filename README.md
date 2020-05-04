@@ -4,6 +4,8 @@ Unify strings to all use the same quote where possible.
 Unify all prefixex to lowercase where possible.  
 Remove u"" prefixes where possible.  
 
+[![codecov](https://codecov.io/gh/Zoynels/autopep8_quotes/branch/master/graph/badge.svg?token=LJS5MWQZVB)](https://codecov.io/gh/Zoynels/autopep8_quotes)
+
 ## CLI
 
 
