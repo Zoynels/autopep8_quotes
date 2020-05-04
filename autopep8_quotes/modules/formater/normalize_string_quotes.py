@@ -262,10 +262,10 @@ class formatter(main_formatter):
         v0_res = isevaluatable(original, prefix)
         if not v0_res[0]:
             print("")
-            print(self.color.red + f"Can't check original! Please test string manually!")
-            print("    " + self.color.red + f"Filename:   {token_dict['filename']}")
-            print("    " + self.color.red + f"Position:   {token_dict['pos']}")
-            print("    " + self.color.red + f"String:     {token_dict['token_string']}")
+            print(self.color.red + f"Can't check original! Please test string manually!" + self.color.reset)
+            print("    " + self.color.red + f"Filename:   {token_dict['filename']}" + self.color.reset)
+            print("    " + self.color.red + f"Position:   {token_dict['pos']}" + self.color.reset)
+            print("    " + self.color.red + f"String:     {token_dict['token_string']}" + self.color.reset)
             print("")
             if args.nsq_log_transforn:
                 save_values_to_file(args=args, input_list=[token_dict], name="nsq-original__bad_value")
@@ -275,7 +275,7 @@ class formatter(main_formatter):
         # Good string and value is not changed!
         if v1_res[0] and (v1_res[1] == v0_res[1]):
             if args.debug:
-                print(self.color.red + f"Return v1: {v1}")
+                print(self.color.red + f"Return v1: {v1}" + self.color.reset)
             if args.nsq_log_transform:
                 save_values_to_file(args=args, input_list=[token_dict], name="nsq-changed__new_quote")
             return v1, quotes_codes.changed__new_quote
@@ -284,7 +284,7 @@ class formatter(main_formatter):
         # Good string and value is not changed!
         if v2_res[0] and (v2_res[1] == v0_res[1]):
             if args.debug:
-                print(self.color.red + f"Return v2: {v2}")
+                print(self.color.red + f"Return v2: {v2}" + self.color.reset)
             if args.nsq_log_transform:
                 save_values_to_file(args=args, input_list=[token_dict], name="nsq-changed__old_quote")
             return v2, quotes_codes.changed__old_quote
@@ -293,7 +293,7 @@ class formatter(main_formatter):
         v3_res = isevaluatable(v3, prefix)
         if v3_res[0] and (v3_res[1] == v0_res[1]):
             if args.debug:
-                print(self.color.red + f"Return v3: {v3}")
+                print(self.color.red + f"Return v3: {v3}" + self.color.reset)
             if args.nsq_log_transform:
                 save_values_to_file(args=args, input_list=[token_dict], name="nsq-changed__quote_bruteforce")
             return v3, quotes_codes.changed__quote_bruteforce
@@ -308,13 +308,13 @@ class formatter(main_formatter):
                                      token_dict: Dict[str, Any]
                                      ) -> Tuple[str, quotes_codes]:
         print("")
-        print(self.color.red + f"Can't transform, return original! Please simpify string manually!")
-        print("    " + self.color.red + f"Filename:   {token_dict['filename']}")
-        print("    " + self.color.red + f"Position:   {token_dict['pos']}")
-        print("    " + self.color.red + f"String:     {token_dict['token_string']}")
-        print("        " + self.color.red + f"Original:   {original}")
-        print("        " + self.color.red + f"Try v1:     {v1}")
-        print("        " + self.color.red + f"Try v2:     {v2}")
+        print(self.color.red + f"Can't transform, return original! Please simpify string manually!" + self.color.reset)
+        print("    " + self.color.red + f"Filename:   {token_dict['filename']}" + self.color.reset)
+        print("    " + self.color.red + f"Position:   {token_dict['pos']}" + self.color.reset)
+        print("    " + self.color.red + f"String:     {token_dict['token_string']}" + self.color.reset)
+        print("        " + self.color.red + f"Original:   {original}" + self.color.reset)
+        print("        " + self.color.red + f"Try v1:     {v1}" + self.color.reset)
+        print("        " + self.color.red + f"Try v2:     {v2}" + self.color.reset)
         print("")
         if args.nsq_log_transform:
             save_values_to_file(args=args, input_list=[token_dict], name="nsq-original__cant_transform")
