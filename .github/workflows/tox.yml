@@ -37,10 +37,10 @@ jobs:
     - name: Test with tox
       run: tox
 
-    - name: Create coverage.xml
-    - uses: actions/upload-artifact@master
+    - name: Create Artifact
+      uses: actions/upload-artifact@v1
       with:
         name: create-artifact-logs
-        path: .tox/checkonly/log/
+        path: .tox/checkonly/log
 
 
