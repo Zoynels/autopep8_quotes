@@ -12,7 +12,7 @@ from autopep8_quotes._util._colorama import col_red
 from autopep8_quotes._util._io import stdout_print
 from autopep8_quotes._util._main import format_file as __base_function__
 
-__version__ = "0.6"
+__version__ = "0.6.1"
 __title_name__ = "autopep8_quotes"
 
 
