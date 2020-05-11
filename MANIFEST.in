@@ -1,5 +1,4 @@
-include *.whl
-include *.tar.gz
+include .bandit
 include tox.ini
 include LICENSE
 include README

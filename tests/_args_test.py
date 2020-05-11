@@ -257,7 +257,7 @@ def test_autodetect_config_file__file_instead_dir() -> None:
 
 
 @pytest.mark.basic  # type: ignore
-def test_config_file__normal(caplog) -> None:
+def test_config_file__normal(caplog: Any) -> None:
     argv = []
     argv.append("--config-file=tests/config_test.ini")
 
@@ -278,7 +278,7 @@ def test_config_file__normal(caplog) -> None:
 
 
 @pytest.mark.basic  # type: ignore
-def test_config_file__broken(caplog) -> None:
+def test_config_file__broken(caplog: Any) -> None:
     argv = []
     argv.append("--config-file=tests/config_broken.ini")
 

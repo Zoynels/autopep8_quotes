@@ -1,18 +1,22 @@
 ﻿#!/usr/bin/env python
 """Setup for autopep8_quotes."""
+from typing import List
+from typing import Any
+
 
 import ast
-from setuptools import setup
+from setuptools import setup  # type: ignore
+
 
 try:
     # for pip >= 10
-    from pip._internal.req import parse_requirements
+    from pip._internal.req import parse_requirements  # type: ignore
 except ImportError:
     # for pip <= 9.0.3
-    from pip.req import parse_requirements
+    from pip.req import parse_requirements  # type: ignore
 
 
-def load_requirements(fname):
+def load_requirements(fname: str) -> List[str]:
     try:
         reqs = parse_requirements(fname, session="autopep8_quotes")
         return [str(ir.req) for ir in reqs]
@@ -21,14 +25,14 @@ def load_requirements(fname):
         return [str(ir.requirement) for ir in reqs]
 
 
-def version():
+def version() -> Any:
     """Return version string."""
     import os
     print(os.listdir())
     with open("autopep8_quotes/__init__.py") as input_file:
         for line in input_file:
             if line.startswith("__version__"):
-                return ast.parse(line).body[0].value.s
+                return ast.parse(line).body[0].value.s  # type: ignore
     return None
 
 
@@ -41,14 +45,14 @@ with open("README.md") as readme:
                       "Remove u-prefix. ",
           long_description=readme.read(),
           long_description_content_type="text/markdown",
-          license="Expat License",
+          license="GNU Affero General Public License v3",
           author="Dmitrii",
-          author_email="zoynels@gmailc.com",
+          author_email="zoynels@gmail.com",
           url="https://github.com/myint/autopep8_quotes",
           classifiers=["Intended Audience :: Developers",
                        "Environment :: Console",
                        "Programming Language :: Python :: 3",
-                       "License :: OSI Approved :: MIT License"],
+                       "License :: OSI Approved :: GNU Affero General Public License v3"],
           keywords="strings, formatter, style",
           entry_points={
               "console_scripts": ["autopep8_quotes = autopep8_quotes.__init__:main"],
