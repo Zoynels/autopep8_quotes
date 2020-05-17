@@ -48,7 +48,7 @@ with open("README.md") as readme:
           license="GNU Affero General Public License v3",
           author="Dmitrii",
           author_email="zoynels@gmail.com",
-          url="https://github.com/myint/autopep8_quotes",
+          url="https://github.com/zoynels/autopep8_quotes",
           classifiers=["Intended Audience :: Developers",
                        "Environment :: Console",
                        "Programming Language :: Python :: 3",
