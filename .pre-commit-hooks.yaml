@@ -2,6 +2,7 @@
     name: autopep8_quotes
     entry: autopep8_quotes
     language: python
-    types: [python]
-    require_serial: true
-    args: ["--in-place"]
+    'types': [python]
+    args: ["--diff", "--check-hard", "--recursive"]
+    require_serial: false
+    additional_dependencies: []
