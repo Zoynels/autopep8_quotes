@@ -12,7 +12,7 @@ from autopep8_quotes._util._colorama import col_red
 from autopep8_quotes._util._io import stdout_print
 from autopep8_quotes._util._main import format_file as __base_function__
 
-__version__ = "0.6.1"
+__version__ = "0.6.2"
 __title_name__ = "autopep8_quotes"
 
 
@@ -32,6 +32,7 @@ def _main(args: Any, standard_out: Any, standard_error: Any) -> int:
     changes_needed = False
     failure_files_count = 0
     read_files_count = 0
+    args._diff_files_count = 0
     while filenames:
         name = filenames.pop(0)
         if os.path.isdir(name):
@@ -66,6 +67,10 @@ def _main(args: Any, standard_out: Any, standard_error: Any) -> int:
 
     if failure_files_count != 0:
         stdout_print(col_red + f"Error: read {read_files_count} source files with failure {failure_files_count}", otype="ok")
+        return 1
+
+    if args._diff_files_count != 0:
+        stdout_print(col_red + f"Failure: read {read_files_count} with changes in {args._diff_files_count} files", otype="ok")
         return 1
 
     stdout_print(col_green + f"Success: read {read_files_count} source files", otype="ok")

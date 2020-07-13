@@ -13,9 +13,12 @@ class formatter(main_formatter):
                             "Even if all changes were made before check == changes is needed. "
                             "Compare source on start and formatted code when finish run all modules. "
                             "Exit with a error code when find first file that need changes. ")
+        parser.add_argument("-ch2", "--check-hard-count", action="store_true",
+                            help="Count changes files. ")
 
     def default_arguments(self, defaults: Dict[str, Any], *_args: Any, **kwargs: Any) -> None:
         defaults["check_hard"] = False
+        defaults["check_hard_count"] = False
 
     def show_or_save(self,
                      args: SimpleNamespace,
@@ -26,6 +29,8 @@ class formatter(main_formatter):
         """Actions with result"""
         if source != formatted_source:
             if args.check_hard:
+                if args.check_hard_count:
+                    args._diff_files_count += 1
                 sys.exit(f"Error: --check-hard: need changes in file: {args._read_filename}")
         return "continue"
 

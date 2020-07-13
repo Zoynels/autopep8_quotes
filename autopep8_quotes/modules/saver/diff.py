@@ -12,9 +12,12 @@ class formatter(main_formatter):
         parser.add_argument("-d", "--diff", action="store_true",
                             help="Print changes. "
                             "Real changes can be applied by other modules. ")
+        parser.add_argument("-d2", "--diff-count", action="store_true",
+                            help="Count changes files. ")
 
     def default_arguments(self, defaults: Dict[str, Any], *_args: Any, **kwargs: Any) -> None:
         defaults["diff"] = False
+        defaults["diff_count"] = False
 
     def show_or_save(self,
                      args: SimpleNamespace,
@@ -25,6 +28,8 @@ class formatter(main_formatter):
         """Actions with result"""
         if source != formatted_source:
             if args.diff:
+                if args.diff_count:
+                    args._diff_files_count += 1
                 diff = difflib.unified_diff(
                     source.splitlines(),
                     formatted_source.splitlines(),

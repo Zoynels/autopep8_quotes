@@ -3,6 +3,6 @@
     entry: autopep8_quotes
     language: python
     'types': [python]
-    args: ["--diff", "--check-hard", "--recursive"]
+    args: ["--diff", "--in-place", "--in-place-count", "--recursive"]
     require_serial: false
     additional_dependencies: []

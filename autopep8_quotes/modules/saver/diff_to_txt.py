@@ -12,9 +12,12 @@ class formatter(main_formatter):
         parser.add_argument("-t", "--diff-to-txt", action="store_true",
                             help="Save changes into txt file. "
                             "Real changes can be applied by other modules. ")
+        parser.add_argument("-t2", "--diff-to-txt-count", action="store_true",
+                            help="Count changes files. ")
 
     def default_arguments(self, defaults: Dict[str, Any], *_args: Any, **kwargs: Any) -> None:
         defaults["diff_to_txt"] = False
+        defaults["diff_to_txt_count"] = False
 
     def show_or_save(self,
                      args: SimpleNamespace,
@@ -25,6 +28,8 @@ class formatter(main_formatter):
         """Actions with result"""
         if source != formatted_source:
             if args.diff_to_txt:
+                if args.diff_to_txt_count:
+                    args._diff_files_count += 1
                 diff = difflib.unified_diff(
                     source.splitlines(),
                     formatted_source.splitlines(),

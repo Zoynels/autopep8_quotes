@@ -13,9 +13,12 @@ class formatter(main_formatter):
                             "If --in-place and --check-only then will be used only --check-only. "
                             "Be carefull when use --in-place and --new-file togeather. "
                             "Please use right order in --start-save-first/--start-save-last options. ")
+        parser.add_argument("-i2", "--in-place-count", action="store_true",
+                            help="Count changes files. ")
 
     def default_arguments(self, defaults: Dict[str, Any], *_args: Any, **kwargs: Any) -> None:
         defaults["in_place"] = False
+        defaults["in_place_count"] = False
 
     def show_or_save(self,
                      args: SimpleNamespace,
@@ -26,6 +29,8 @@ class formatter(main_formatter):
         """Actions with result"""
         if source != formatted_source:
             if args.in_place:
+                if args.in_place_count:
+                    args._diff_files_count += 1
                 with self.open_with_encoding(args._read_filename, mode="w",
                                              encoding=args._read_encoding) as output_file:
                     output_file.write(formatted_source)

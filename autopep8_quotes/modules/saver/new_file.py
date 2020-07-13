@@ -12,9 +12,12 @@ class formatter(main_formatter):
                             help="Make changes to files and create new file in "
                             "same location with .autopep8_quotesing extention. "
                             "If --new-file and --check-only then will be used only --check-only. ")
+        parser.add_argument("-n2", "--new-file-count", action="store_true",
+                            help="Count changes files. ")
 
     def default_arguments(self, defaults: Dict[str, Any], *_args: Any, **kwargs: Any) -> None:
         defaults["new_file"] = False
+        defaults["new_file_count"] = False
 
     def show_or_save(self,
                      args: SimpleNamespace,
@@ -25,6 +28,8 @@ class formatter(main_formatter):
         """Actions with result"""
         if source != formatted_source:
             if args.new_file:
+                if args.new_file_count:
+                    args._diff_files_count += 1
                 with self.open_with_encoding(args._read_filename + ".autopep8_quotes",
                                              mode="w",
                                              encoding=args._read_encoding) as output_file:
