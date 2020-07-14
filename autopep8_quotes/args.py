@@ -50,6 +50,7 @@ def agrs_parse(argv: List[Any], *_args: Any, **kwargs: Any) -> SimpleNamespace:
     defaults: Dict[str, Any] = {}
     plugins.map_all(func="default_arguments", defaults=defaults)
 
+    defaults["exit_zero"] = False
     defaults["print_files"] = False
     defaults["debug"] = False
     defaults["show_args"] = False
@@ -127,6 +128,8 @@ def agrs_parse(argv: List[Any], *_args: Any, **kwargs: Any) -> SimpleNamespace:
                         help="Drill down directories recursively")
     parser.add_argument("--print-files", action="store_true",
                         help="Print parsed files")
+    parser.add_argument("--exit-zero", action="store_true",
+                        help="Exit with status code "0" even if there are errors.")
 
     parser.add_argument("--read-files-matching-pattern",
                         type=str, nargs="+",

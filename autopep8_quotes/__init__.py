@@ -67,10 +67,14 @@ def _main(args: Any, standard_out: Any, standard_error: Any) -> int:
 
     if failure_files_count != 0:
         stdout_print(col_red + f"Error: read {read_files_count} source files with failure {failure_files_count}", otype="ok")
+        if args.exit_zero:
+            return 0
         return 1
 
     if args._diff_files_count != 0:
         stdout_print(col_red + f"Failure: read {read_files_count} with changes in {args._diff_files_count} files", otype="ok")
+        if args.exit_zero:
+            return 0
         return 1
 
     stdout_print(col_green + f"Success: read {read_files_count} source files", otype="ok")
