@@ -62,6 +62,7 @@ with open("README.md") as readme:
                   "remove_string_u_prefix = autopep8_quotes.modules.formater.remove_string_u_prefix:formatter",
                   "save_values_to_file = autopep8_quotes.modules.formater.save_values_to_file:formatter",
                   "remove_empty_lines_spaces = autopep8_quotes.modules.formater.remove_empty_lines_spaces:formatter",
+                  "fix_end_file_lines = autopep8_quotes.modules.formater.fix_end_file_lines:formatter",
               ],
               "autopep8_quotes.saver": [
                   "check_soft = autopep8_quotes.modules.saver.check_soft:formatter",
@@ -70,6 +71,7 @@ with open("README.md") as readme:
                   "diff_to_txt = autopep8_quotes.modules.saver.diff_to_txt:formatter",
                   "in_place = autopep8_quotes.modules.saver.in_place:formatter",
                   "new_file = autopep8_quotes.modules.saver.new_file:formatter",
+                  "git_smugle = autopep8_quotes.modules.saver.git_smugle:formatter",
               ],
           },
           packages=["autopep8_quotes"],
