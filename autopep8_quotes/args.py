@@ -78,7 +78,7 @@ def agrs_parse(argv: List[Any], *_args: Any, **kwargs: Any) -> SimpleNamespace:
     defaults["plugin_order_ontoken_first"] += '{"name": "lowercase-string-prefix"} '
     defaults["plugin_order_ontoken_first"] += "]"
 
-    defaults["plugin_order_ontoken_last"] = """[{"name": "normalize-string-quotes"}, """ + \
+    defaults["plugin_order_ontoken_last"] = """[{"name": "normalize-string-quotes"}, {"name": "fix-end-file-lines"}, """ + \
         """{"name": "save-values-to-file", "kwargs": {"name": "after_change"}}]"""
 
     # Read config files
