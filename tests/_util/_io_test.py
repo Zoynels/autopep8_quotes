@@ -1,6 +1,7 @@
 import io
 import os
 import sys
+from types import SimpleNamespace
 from typing import Any
 from typing import Pattern
 from typing import Union
@@ -77,7 +78,8 @@ def test_load_modules(search_path: str, pat: Union[str, Pattern[Any]]) -> None:
 
 @pytest.mark.basic
 def test_stdout_print(value: Any, otype: str) -> None:
-    stdout_print(value, otype=otype)
+    args = SimpleNamespace()
+    stdout_print(args, value, otype=otype)
 
 
 @pytest.mark.basic

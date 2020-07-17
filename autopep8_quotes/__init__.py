@@ -86,7 +86,7 @@ def main() -> int:  # pragma: no cover
     """Return exit status."""
     try:
         # Exit on broken pipe.
-        signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+        signal.signal(signal.SIGPIPE, signal.SIG_DFL)  # type: ignore
     except AttributeError:
         # SIGPIPE is not available on Windows.
         pass

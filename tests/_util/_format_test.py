@@ -4,7 +4,7 @@ import pytest  # type: ignore
 
 @pytest.mark.basic  # type: ignore
 def test__isevaluatable():
-    import autopep8_quotes._util._format as util_format
+    from autopep8_quotes._util import _format as util_format
     assert (True, 'Some " text') == util_format.isevaluatable("""'Some " text'""", "")
     assert (True, 'Some " text') == util_format.isevaluatable("""f'Some " text'""", "f")
 
@@ -13,7 +13,8 @@ def test__isevaluatable():
 def test__save_values_to_file() -> None:
     import datetime
     from types import SimpleNamespace
-    import autopep8_quotes._util._format as util_format
+
+    from autopep8_quotes._util import _format as util_format
 
     args = SimpleNamespace()
     args._datetime_start = datetime.datetime.now()
