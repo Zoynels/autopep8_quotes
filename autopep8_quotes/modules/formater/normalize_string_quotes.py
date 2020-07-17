@@ -31,6 +31,10 @@ class quotes_codes(Enum):
 
 
 class formatter(main_formatter):
+    def __init__(self):
+        super().__init__()
+        self.is_parse = True
+
     def add_arguments(self, parser: Any, *_args: Any, **kwargs: Any) -> None:
         parser.add_argument("--normalize-string-quotes", "--nsq",
                             action="store_true",
@@ -264,7 +268,7 @@ class formatter(main_formatter):
         v0_res = isevaluatable(original, prefix)
         if not v0_res[0]:
             self.stdout_print(args, "")
-            self.stdout_print(args, self.color.red + f"Can't check original! Please test string manually!" + self.color.reset)
+            self.stdout_print(args, self.color.red + "Can't check original! Please test string manually!" + self.color.reset)
             self.stdout_print(args, "    " + self.color.red + f"Filename:   {token_dict['filename']}" + self.color.reset)
             self.stdout_print(args, "    " + self.color.red + f"Position:   {token_dict['pos']}" + self.color.reset)
             self.stdout_print(args, "    " + self.color.red + f"String:     {token_dict['token_string']}" + self.color.reset)
@@ -310,7 +314,7 @@ class formatter(main_formatter):
                                      token_dict: Dict[str, Any]
                                      ) -> Tuple[str, quotes_codes]:
         self.stdout_print(args, "")
-        self.stdout_print(args, self.color.red + f"Can't transform, return original! Please simpify string manually!" + self.color.reset)
+        self.stdout_print(args, self.color.red + "Can't transform, return original! Please simpify string manually!" + self.color.reset)
         self.stdout_print(args, "    " + self.color.red + f"Filename:   {token_dict['filename']}" + self.color.reset)
         self.stdout_print(args, "    " + self.color.red + f"Position:   {token_dict['pos']}" + self.color.reset)
         self.stdout_print(args, "    " + self.color.red + f"String:     {token_dict['token_string']}" + self.color.reset)

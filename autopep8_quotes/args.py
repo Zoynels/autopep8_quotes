@@ -211,4 +211,5 @@ def agrs_parse(argv: List[Any], *_args: Any, **kwargs: Any) -> SimpleNamespace:
         stdout_print(args, str(args), otype="ok")
         sys.exit(0)
 
+    args._dev_debug_level = 0
     return args

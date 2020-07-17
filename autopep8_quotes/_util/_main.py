@@ -24,9 +24,16 @@ def format_file(args: SimpleNamespace) -> Any:
     args._read_file_need_load = True
 
     result: List[Any] = [False]
-
+    if args._dev_debug_level >= 10:
+        print("format_file: ", args._read_filename)
     for onfile_dict in args._plugin_order_onfile_order:
         onfile_plugin = args._plugins_manager.filter(name=onfile_dict.name).index(0).plugin()
+        if not onfile_plugin.is_show_or_save:
+            if args._dev_debug_level >= 10:
+                print("format_file: onfile_dict.name: is not is_show_or_save: ", onfile_dict.name, onfile_plugin.is_show_or_save)
+            continue
+        if args._dev_debug_level >= 10:
+            print("format_file: onfile_dict.name: ", onfile_dict.name)
 
         if not onfile_plugin.check_is_enabled(args):
             continue
@@ -118,29 +125,37 @@ def _format_code(source: str, args: SimpleNamespace, filename: str) -> Any:
     if not source:
         return source
 
-    args._modified_tokens = []
-    token_index = -1
-    for token, line_tokens in prepare_tokens(source):
-        token_index += 1
-        if search_comment_code(line_tokens, search="noqa", filename=filename):
-            pass
-            # no check/reformat line
-        else:
-            for ontoken_dict in args._plugin_order_ontoken_order:
-                try:
-                    ontoken_plugin = args._plugins_manager.filter(name=ontoken_dict.name).index(0).plugin()
-                    if not ontoken_plugin.check_is_enabled(args):
-                        continue
+    if args._dev_debug_level >= 20:
+        print("_format_code: start", "format_file: ", args._read_filename)
+
+    for ontoken_dict in args._plugin_order_ontoken_order:
+        try:
+            ontoken_plugin = args._plugins_manager.filter(name=ontoken_dict.name).index(0).plugin()
+            if not ontoken_plugin.is_parse:
+                if args._dev_debug_level >= 25:
+                    print("_format_code: not show_or_save plugin", ontoken_dict.name)
+                continue
+
+            if not ontoken_plugin.check_is_enabled(args):
+                continue
+            args._modified_tokens = []
+            for token, line_tokens in prepare_tokens(source):
+                if args._dev_debug_level >= 25:
+                    print("_format_code: read token", token)
+                if search_comment_code(line_tokens, search="noqa", filename=filename):
+                    pass
+                    # no check/reformat line
+                else:
+                    if args._dev_debug_level >= 25:
+                        print("_format_code: apply plugin:", ontoken_dict.name)
+
                     token_dict = get_token_dict(token.type, token.string, token.start, token.end, token.line, filename)
                     token = ontoken_plugin.parse(token=token, line_tokens=line_tokens, args=args, token_dict=token_dict,
                                                  _args=ontoken_dict.args, kwargs=ontoken_dict.kwargs)
+                args._modified_tokens.append((token.type, token.string, token.start, token.end, token.line))
+            source = untokenize.untokenize(args._modified_tokens)
+            del args._modified_tokens
+        except BaseException as e:
+            raise e
 
-                except BaseException as e:
-                    raise e
-
-        args._modified_tokens.append((token.type, token.string, token.start, token.end, token.line))
-
-    modified_tokens = args._modified_tokens
-    del args._modified_tokens
-
-    return untokenize.untokenize(modified_tokens)
+    return source

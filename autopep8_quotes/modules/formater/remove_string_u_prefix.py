@@ -10,6 +10,10 @@ from autopep8_quotes._util._modules import main_formatter
 
 
 class formatter(main_formatter):
+    def __init__(self):
+        super().__init__()
+        self.is_parse = True
+
     def add_arguments(self, parser: Any, *_args: Any, **kwargs: Any) -> None:
         parser.add_argument("--remove-string-u-prefix", action="store_true",
                             help='Removes any u prefix from the string: u"sometext" to "sometext"')

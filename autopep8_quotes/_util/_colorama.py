@@ -2,8 +2,6 @@
 from typing import Generator
 from typing import Iterator
 
-from autopep8_quotes._util._io import stdout_print
-
 try:
     import colorama  # type: ignore
     colorama.init(autoreset=True)

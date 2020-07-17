@@ -27,6 +27,8 @@ class main_formatter(object):
         self.color.red = col_red
         self.color.magenta = col_magenta
         self.color.reset = col_reset
+        self.is_parse = False
+        self.is_show_or_save = False
 
     @abstractmethod
     def add_arguments(self, parser: Any, *_args: Any, **kwargs: Any) -> None:

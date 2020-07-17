@@ -7,6 +7,10 @@ from autopep8_quotes._util._modules import main_formatter
 
 
 class formatter(main_formatter):
+    def __init__(self):
+        super().__init__()
+        self.is_show_or_save = True
+
     def add_arguments(self, parser: Any, *_args: Any, **kwargs: Any) -> None:
         parser.add_argument("-n", "--new-file", action="store_true",
                             help="Make changes to files and create new file in "
