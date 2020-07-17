@@ -90,30 +90,15 @@ def load_modules_ep(group: str) -> Dict[str, Any]:
 def stdout_print(args: Union[SimpleNamespace, argparse.Namespace], value: Any, otype: str = "", sep: str = " ", end: str = "\n") -> int:
     if hasattr(args, "print_disable") and args.print_disable:
         return 0
-    if hasattr(stdout_get(otype), "closed"):
-        return 0
     try:
         stdout_get(otype).write(value)
         stdout_get(otype).write(end)
     except BaseException:
-        stdout_get(otype).write(str(value).encode("utf-8"))
-        stdout_get(otype).write(str(end).encode("utf-8"))
-    if False:
         try:
-            p = sep.join(str(a) for a in value)
-            print(p, end=end, file=stdout_get(otype))
+            stdout_get(otype).write(str(value).encode("utf-8"))
+            stdout_get(otype).write(str(end).encode("utf-8"))
         except BaseException:
-            if not isinstance(sep, (bytes)):
-                sep = sep.encode("utf-8")
-            if not isinstance(sep, (bytes)):
-                end = end.encode("utf-8")
-            pL = []
-            for a in value:
-                if not isinstance(sep, (bytes)):
-                    a = a.encode("utf-8")
-                pL.append(a)
-            p = sep.join(pL)
-            print(p, end=end, file=stdout_get(otype))
+            pass
     return 0
 
 
