@@ -51,20 +51,19 @@ def format_file(args: SimpleNamespace) -> Any:
         )
 
         result = [False]
-        if source != formatted_source:
-            func = onfile_plugin.show_or_save
-            res = func(args, source, formatted_source, *onfile_dict.args, **onfile_dict.kwargs)
-            if res is None:
-                pass
-            elif isinstance(res, (list, tuple)):
-                if res[0].lower() == "return":
-                    if len(res[1:]) == 1:
-                        result.append(res[1])
-                    else:
-                        result.append(res[1:])
-            elif isinstance(res, str):
-                if res.lower() == "continue":
-                    continue
+        func = onfile_plugin.show_or_save
+        res = func(args, source, formatted_source, *onfile_dict.args, **onfile_dict.kwargs)
+        if res is None:
+            pass
+        elif isinstance(res, (list, tuple)):
+            if res[0].lower() == "return":
+                if len(res[1:]) == 1:
+                    result.append(res[1])
+                else:
+                    result.append(res[1:])
+        elif isinstance(res, str):
+            if res.lower() == "continue":
+                continue
 
     return any(result)
 
