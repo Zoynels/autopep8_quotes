@@ -31,7 +31,7 @@ class formatter(main_formatter):
                 if args.check_soft_count:
                     args._diff_files_count += 1
                 txt = self.color.red + f"check-soft: need changes in file: {args._read_filename}" + self.color.reset
-                self.stdout_print("\n    " + txt, otype=args._standard_out)
+                self.stdout_print(args, "\n    " + txt, otype=args._standard_out)
             return "return", True
         return "continue"
 

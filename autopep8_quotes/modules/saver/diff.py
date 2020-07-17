@@ -36,7 +36,7 @@ class formatter(main_formatter):
                     "before/" + args._read_filename,
                     "after /" + args._read_filename,
                     lineterm="")
-                self.stdout_print("\n".join(list(color_diff(diff)) + [""]), otype=args._standard_out)
+                self.stdout_print(args, "\n".join(list(color_diff(diff)) + [""]), otype=args._standard_out)
                 return "return", True
         return "continue"
 

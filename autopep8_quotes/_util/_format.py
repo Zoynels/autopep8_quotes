@@ -10,6 +10,7 @@ from typing import Union
 import ast
 
 from autopep8_quotes._util._io import open_with_encoding
+from autopep8_quotes._util._io import stdout_print
 
 
 def get_token_dict(token_type: int, token_string: str, start: Tuple[int, int],
@@ -39,7 +40,7 @@ def save_values_to_file(args: SimpleNamespace, name: str, input_list: Union[Dict
         input_list = [{"filename": args._read_filename, "pos1": "Unknown (error)", "token_string": str(input_list)}]
 
     if input_list:
-        print(f"Write strings to {fname} from file " + input_list[0]["filename"])
+        stdout_print(args, f"Write strings to {fname} from file " + input_list[0]["filename"])
     with open_with_encoding(fname, mode="a", encoding="utf-8") as output_file:
         for i, token_dict in enumerate(input_list):
             try:
@@ -53,8 +54,8 @@ def save_values_to_file(args: SimpleNamespace, name: str, input_list: Union[Dict
                 output_file.write(f"a_{i+1} = " + token_dict["token_string"])
                 output_file.write("\n")
             except BaseException as e:
-                print(e)
-                print(f"    for token_dict: {token_dict}")
+                stdout_print(args, e)
+                stdout_print(args, f"    for token_dict: {token_dict}")
 
 
 def isevaluatable(s: str, prefix: str = "") -> Tuple[bool, Any]:

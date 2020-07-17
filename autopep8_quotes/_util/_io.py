@@ -86,7 +86,11 @@ def load_modules_ep(group: str) -> Dict[str, Any]:
     return available_methods
 
 
-def stdout_print(value: Any, otype: str = "", sep: str = " ", end: str = "\n") -> None:
+def stdout_print(args: SimpleNamespace, value: Any, otype: str = "", sep: str = " ", end: str = "\n") -> None:
+    if args.print_disable:
+        return 0
+    if hasattr(stdout_get(otype), "closed"):
+        return 0
     try:
         stdout_get(otype).write(value)
         stdout_get(otype).write(end)

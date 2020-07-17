@@ -53,31 +53,31 @@ def _main(args: Any, standard_out: Any, standard_error: Any) -> int:
         elif os.path.isfile(name):
             try:
                 if args.print_files:
-                    stdout_print(f"    read: {name}", otype="ok")
+                    stdout_print(args, f"    read: {name}", otype="ok")
                 read_files_count += 1
                 args._read_filename = name
                 if __base_function__(args=args):
                     changes_needed = True
             except IOError as exception:
-                stdout_print(exception, otype="error")
+                stdout_print(args, exception, otype="error")
                 failure_files_count += 1
         else:
             from errno import ENOENT
             raise IOError(ENOENT, f"File is not exist: {name}", name)
 
     if failure_files_count != 0:
-        stdout_print(col_red + f"Error: read {read_files_count} source files with failure {failure_files_count}", otype="ok")
+        stdout_print(args, col_red + f"Error: read {read_files_count} source files with failure {failure_files_count}", otype="ok")
         if args.exit_zero:
             return 0
         return 1
 
     if args._diff_files_count != 0:
-        stdout_print(col_red + f"Failure: read {read_files_count} with changes in {args._diff_files_count} files", otype="ok")
+        stdout_print(args, col_red + f"Failure: read {read_files_count} with changes in {args._diff_files_count} files", otype="ok")
         if args.exit_zero:
             return 0
         return 1
 
-    stdout_print(col_green + f"Success: read {read_files_count} source files", otype="ok")
+    stdout_print(args, col_green + f"Success: read {read_files_count} source files", otype="ok")
     return 0
 
 

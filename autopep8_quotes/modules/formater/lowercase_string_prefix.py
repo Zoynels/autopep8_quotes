@@ -29,6 +29,9 @@ class formatter(main_formatter):
         Original from https://github.com/psf/black
         """
         if args.lowercase_string_prefix:
+            if token.type != tokenize.STRING:
+                return token
+
             leaf = token.string
             match = re.match(r"^([furbFURB]*)(.*)$", leaf, re.DOTALL)
             assert match is not None, f"failed to match string {leaf!r}"

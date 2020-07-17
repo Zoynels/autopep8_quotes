@@ -1,13 +1,16 @@
 ﻿from typing import Iterator
 from types import SimpleNamespace
 from typing import Generator
+from autopep8_quotes._util._io import stdout_print
 
 try:
     import colorama  # type: ignore
     colorama.init(autoreset=True)
 except ImportError:  # fallback so that the imported classes always exist
-    print("Can't import 'colorama' module to colorize output. "
-          "Will use uncolored output!")
+    pass
+    # disable now, because don't know how to enable/disable print message
+    # print("Can't import 'colorama' module to colorize output. "
+    #       "Will use uncolored output!")
 
     class ColorFallback():
         def __getattr__(self, name: str) -> str:

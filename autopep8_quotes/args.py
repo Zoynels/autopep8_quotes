@@ -16,6 +16,8 @@ from autopep8_quotes import __title_name__
 from autopep8_quotes import __version__
 from autopep8_quotes._util import _args as _util_args
 from autopep8_quotes._util._args import str2bool_dict
+from autopep8_quotes._util._io import stdout_print
+
 
 LOG = logging.getLogger(__name__)
 
@@ -52,6 +54,7 @@ def agrs_parse(argv: List[Any], *_args: Any, **kwargs: Any) -> SimpleNamespace:
 
     defaults["exit_zero"] = False
     defaults["print_files"] = False
+    defaults["print_disable"] = False
     defaults["debug"] = False
     defaults["show_args"] = False
     defaults["save_values_to_file"] = False
@@ -124,6 +127,8 @@ def agrs_parse(argv: List[Any], *_args: Any, **kwargs: Any) -> SimpleNamespace:
                         help="Show debug messages")
     parser.add_argument("--show-args", action="store_true",
                         help="Show readed args for script and exit")
+    parser.add_argument("--print-disable", action="store_true",
+                        help="Disable print msg")
     parser.add_argument("-r", "--recursive", action="store_true",
                         help="Drill down directories recursively")
     parser.add_argument("--print-files", action="store_true",
@@ -154,7 +159,7 @@ def agrs_parse(argv: List[Any], *_args: Any, **kwargs: Any) -> SimpleNamespace:
 
     args_parsed, remaining_argv = parser.parse_known_args(remaining_argv)
     if remaining_argv:
-        print(f"Warning: Unrecognized arguments transform to --files: {remaining_argv}")
+        stdout_print(args_parsed, f"Warning: Unrecognized arguments transform to --files: {remaining_argv}", otype="ok")
         if args_parsed.files is None:
             args_parsed.files = []
         args_parsed.files = args_parsed.files + remaining_argv
@@ -204,7 +209,7 @@ def agrs_parse(argv: List[Any], *_args: Any, **kwargs: Any) -> SimpleNamespace:
     args._datetime_start = datetime.datetime.now()
 
     if args.show_args:
-        print(args)
+        stdout_print(args, str(args), otype="ok")
         sys.exit(0)
 
     return args
