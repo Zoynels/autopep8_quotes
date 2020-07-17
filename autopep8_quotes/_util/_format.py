@@ -15,7 +15,7 @@ from autopep8_quotes._util._io import stdout_print
 
 def get_token_dict(token_type: int, token_string: str, start: Tuple[int, int],
                    end: Tuple[int, int], line: str,
-                   filename: str, all_tokens_lines: List[Any], token_index: int, line_index: int) -> Dict[str, Union[str, int, Tuple[int, int]]]:
+                   filename: str) -> Dict[str, Any]:
     _dict: Dict[str, Union[str, int, Tuple[int, int]]] = {}
     _dict["token_type"] = token_type
     _dict["token_string"] = token_string
@@ -27,9 +27,6 @@ def get_token_dict(token_type: int, token_string: str, start: Tuple[int, int],
     _dict["pos"] = f"Line:pos ({start[0]}:{start[1]} - {end[0]}:{end[1]})"
     _dict["pos1"] = f"({start[0]}:{start[1]} - {end[0]}:{end[1]})"
     _dict["pos2"] = f"Line {start[0]}, pos {start[1]} - line {end[0]}, pos {end[1]}"
-    _dict["all_tokens_lines"] = all_tokens_lines
-    _dict["token_index"] = token_index
-    _dict["line_index"] = line_index
 
     return _dict
 

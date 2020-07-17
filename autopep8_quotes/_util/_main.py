@@ -27,9 +27,9 @@ def format_file(args: SimpleNamespace) -> Any:
 
     for onfile_dict in args._plugin_order_onfile_order:
         onfile_plugin = args._plugins_manager.filter(name=onfile_dict.name).index(0).plugin()
+
         if not onfile_plugin.check_is_enabled(args):
             continue
-
         if args._read_file_need_load:
             # On first launch read file
             # If file changed, e.i. --in-place, then need to reload file on next run (data is updated)
@@ -86,7 +86,7 @@ def prepare_tokens(line: str) -> Any:
         L[endsline].append(x)
     for line_index, endsline in enumerate(L):
         for x in L[endsline]:
-            yield x, L[endsline], L, line_index + 1
+            yield x, L[endsline]
 
 
 def search_comment_code(line: Union[str, List[Any]], filename: str, search: str = "noqa") -> bool:
@@ -120,21 +120,23 @@ def _format_code(source: str, args: SimpleNamespace, filename: str) -> Any:
 
     args._modified_tokens = []
     token_index = -1
-    for token, line_tokens, all_tokens_lines, line_index in prepare_tokens(source):
+    for token, line_tokens in prepare_tokens(source):
         token_index += 1
         if search_comment_code(line_tokens, search="noqa", filename=filename):
             pass
             # no check/reformat line
         else:
             for ontoken_dict in args._plugin_order_ontoken_order:
-                ontoken_plugin = args._plugins_manager.filter(name=ontoken_dict.name).index(0).plugin()
-                if not ontoken_plugin.check_is_enabled(args):
-                    continue
+                try:
+                    ontoken_plugin = args._plugins_manager.filter(name=ontoken_dict.name).index(0).plugin()
+                    if not ontoken_plugin.check_is_enabled(args):
+                        continue
+                    token_dict = get_token_dict(token.type, token.string, token.start, token.end, token.line, filename)
+                    token = ontoken_plugin.parse(token=token, line_tokens=line_tokens, args=args, token_dict=token_dict,
+                                                 _args=ontoken_dict.args, kwargs=ontoken_dict.kwargs)
 
-                token_dict = get_token_dict(token.type, token.string, token.start, token.end, token.line, filename, all_tokens_lines, token_index, line_index)
-
-                token = ontoken_plugin.parse(token=token, line_tokens=line_tokens, args=args, token_dict=token_dict,
-                                             _args=ontoken_dict.args, kwargs=ontoken_dict.kwargs)
+                except BaseException as e:
+                    raise e
 
         args._modified_tokens.append((token.type, token.string, token.start, token.end, token.line))
 
