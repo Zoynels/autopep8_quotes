@@ -17,7 +17,7 @@ class formatter(main_formatter):
                             "bad original values and error values when reformat them. ")
 
     def default_arguments(self, defaults: Dict[str, Any], *_args: Any, **kwargs: Any) -> None:
-        defaults["save_values_to_file"] = True
+        defaults["save_values_to_file"] = False
 
     def parse(self, token: tokenize.TokenInfo,
               line_tokens: List[tokenize.TokenInfo],
