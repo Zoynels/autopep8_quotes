@@ -194,9 +194,9 @@ class formatter(main_formatter):
 
             if args.debug:
                 self.stdout_print(args, "normalize_string_quotes: ")
-                self.stdout_print(args, "    code:          ", code)
-                self.stdout_print(args, "    input_sting:   ", token.string)
-                self.stdout_print(args, "    result_string: ", result_string)
+                self.stdout_print(args, "    code:           {code}")
+                self.stdout_print(args, "    input_sting:    {token.string}")
+                self.stdout_print(args, "    result_string:  {result_string}")
 
             if result_string is not None:
                 token = tokenize.TokenInfo(type=token.type, string=result_string, start=token.start, end=token.end, line=token.line)
