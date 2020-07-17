@@ -31,16 +31,16 @@ class formatter(main_formatter):
                      ) -> Any:
         """Actions with result"""
 
-        if source != formatted_source:
-            if args.git_smugle:
-                if args.git_smugle_count:
-                    args._diff_files_count += 1
-                output_stream = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", newline="")
-                output_stream.write(formatted_source)
-                output_stream.flush()
+        # write always even if not changed
+        if args.git_smugle:
+            if args.git_smugle_count:
+                args._diff_files_count += 1
+            output_stream = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", newline="")
+            output_stream.write(formatted_source)
+            output_stream.flush()
 
-                args._read_file_need_load = False
-                return "return", False
+            args._read_file_need_load = False
+            return "return", False
         return "continue"
 
     def check_is_enabled(self, args: SimpleNamespace, *_args: Any, **kwargs: Any) -> Any:
