@@ -18,7 +18,6 @@ from autopep8_quotes._util import _args as _util_args
 from autopep8_quotes._util._args import str2bool_dict
 from autopep8_quotes._util._io import stdout_print
 
-
 LOG = logging.getLogger(__name__)
 
 
@@ -134,7 +133,7 @@ def agrs_parse(argv: List[Any], *_args: Any, **kwargs: Any) -> SimpleNamespace:
     parser.add_argument("--print-files", action="store_true",
                         help="Print parsed files")
     parser.add_argument("--exit-zero", action="store_true",
-                        help="Exit with status code \"0\" even if there are errors.")
+                        help='Exit with status code "0" even if there are errors.')
 
     parser.add_argument("--read-files-matching-pattern",
                         type=str, nargs="+",

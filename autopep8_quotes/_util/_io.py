@@ -1,4 +1,5 @@
-﻿import io
+﻿import argparse
+import io
 import os
 import pathlib
 import re
@@ -86,8 +87,8 @@ def load_modules_ep(group: str) -> Dict[str, Any]:
     return available_methods
 
 
-def stdout_print(args: SimpleNamespace, value: Any, otype: str = "", sep: str = " ", end: str = "\n") -> None:
-    if args.print_disable:
+def stdout_print(args: Union[SimpleNamespace, argparse.Namespace], value: Any, otype: str = "", sep: str = " ", end: str = "\n") -> int:
+    if hasattr(args, "print_disable") and args.print_disable:
         return 0
     if hasattr(stdout_get(otype), "closed"):
         return 0
@@ -113,6 +114,7 @@ def stdout_print(args: SimpleNamespace, value: Any, otype: str = "", sep: str = 
                 pL.append(a)
             p = sep.join(pL)
             print(p, end=end, file=stdout_get(otype))
+    return 0
 
 
 def stdout_get(otype: Any) -> Any:

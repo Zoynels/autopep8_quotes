@@ -1,11 +1,12 @@
-﻿import ast
-from types import SimpleNamespace
+﻿from types import SimpleNamespace
 from typing import Any
 from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Set
 from typing import Union
+
+import ast
 
 
 def str2bool(v: Any) -> bool:

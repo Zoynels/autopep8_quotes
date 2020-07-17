@@ -21,7 +21,7 @@ def _main(args: Any, standard_out: Any, standard_error: Any) -> int:
 
     Returns `1` if any changes are still needed, otherwise 0"""
 
-    from . args import agrs_parse
+    from .args import agrs_parse
 
     kwargs = {}
     kwargs["_standard_out"] = standard_out
@@ -33,6 +33,7 @@ def _main(args: Any, standard_out: Any, standard_error: Any) -> int:
     failure_files_count = 0
     read_files_count = 0
     args._diff_files_count = 0
+
     while filenames:
         name = filenames.pop(0)
         if os.path.isdir(name):

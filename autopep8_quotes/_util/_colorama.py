@@ -1,6 +1,7 @@
-﻿from typing import Iterator
-from types import SimpleNamespace
+﻿from types import SimpleNamespace
 from typing import Generator
+from typing import Iterator
+
 from autopep8_quotes._util._io import stdout_print
 
 try:

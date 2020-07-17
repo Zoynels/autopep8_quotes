@@ -1,5 +1,5 @@
-﻿import os
-import difflib
+﻿import difflib
+import os
 from types import SimpleNamespace
 from typing import Any
 from typing import Dict

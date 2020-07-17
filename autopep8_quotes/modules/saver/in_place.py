@@ -8,7 +8,7 @@ from autopep8_quotes._util._modules import main_formatter
 
 class formatter(main_formatter):
     def add_arguments(self, parser: Any, *_args: Any, **kwargs: Any) -> None:
-        parser.add_argument("-i", "--in-place", action="store_true",
+        parser.add_argument("-i", "--in-place", "--inplace", action="store_true",
                             help="Make changes to files. "
                             "If --in-place and --check-only then will be used only --check-only. "
                             "Be carefull when use --in-place and --new-file togeather. "

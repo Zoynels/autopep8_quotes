@@ -1,5 +1,5 @@
-﻿from types import SimpleNamespace
-import os
+﻿import os
+from types import SimpleNamespace
 from typing import Any
 from typing import Dict
 from typing import List

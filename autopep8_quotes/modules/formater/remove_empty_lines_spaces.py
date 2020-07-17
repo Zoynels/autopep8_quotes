@@ -24,7 +24,7 @@ class formatter(main_formatter):
               **kwargs: Any
               ) -> tokenize.TokenInfo:
         if args.remove_empty_lines_spaces:
-            if (len(line_tokens) != 1) or (token.type != tokenize.NL) :
+            if (len(line_tokens) != 1) or (token.type != tokenize.NL):
                 return token
             if ((token.string != "\n") and (token.string != "\r\n") and (token.string != "\r")):
                 return token

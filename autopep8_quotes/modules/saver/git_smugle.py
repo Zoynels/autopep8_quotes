@@ -1,4 +1,5 @@
-﻿
+﻿import io
+import sys
 from types import SimpleNamespace
 from typing import Any
 from typing import Dict
@@ -30,11 +31,9 @@ class formatter(main_formatter):
             if args.git_smugle:
                 if args.git_smugle_count:
                     args._diff_files_count += 1
-                import io, sys
-                output_stream = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', newline='')
+                output_stream = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", newline="")
                 output_stream.write(formatted_source)
                 output_stream.flush()
-                #sys.stdout.buffer = output_stream
 
                 args._read_file_need_load = False
                 return "return", False
