@@ -11,6 +11,8 @@ except ImportError:
     HAS_COLORAMA = False
 
 # https://stackoverflow.com/questions/51044068/test-for-import-of-optional-dependencies-in-init-py-with-pytest-python-3-5
+
+
 @pytest.fixture
 def no_module(monkeypatch):
     import_orig = builtins.__import__
@@ -31,18 +33,21 @@ def cleanup_imports():
 
 # Error when uncomment and commend skipif
 # @pytest.mark.usefixtures('no_module')
+
+
 @pytest.mark.skipif("HAS_COLORAMA")  # type: ignore
 @pytest.mark.skipif("not HAS_COLORAMA")  # type: ignore
 def test_module_missing() -> None:
-    import autopep8_quotes._util._colorama as util_colorama
+    from autopep8_quotes._util import _colorama as util_colorama
     assert isinstance(util_colorama.colorama, SimpleNamespace)
 
 
 @pytest.mark.skipif("HAS_COLORAMA")  # type: ignore
 @pytest.mark.skipif("not HAS_COLORAMA")  # type: ignore
 def test_module_missing_v2(monkeypatch) -> None:
-    import autopep8_quotes._util._colorama
     import copy
+
+    import autopep8_quotes._util._colorama
     fakesysmodules = copy.copy(sys.modules)
     fakesysmodules["colorama"] = None
     monkeypatch.delitem(sys.modules, "colorama")
@@ -55,13 +60,14 @@ def test_module_missing_v2(monkeypatch) -> None:
 @pytest.mark.skipif("HAS_COLORAMA")  # type: ignore
 @pytest.mark.skipif("not HAS_COLORAMA")  # type: ignore
 def test_module_available() -> None:
-    import autopep8_quotes._util._colorama as util_colorama
+    from autopep8_quotes._util import _colorama as util_colorama
     assert not isinstance(util_colorama.colorama, SimpleNamespace)
+
 
 @pytest.mark.skipif("HAS_COLORAMA")  # type: ignore
 @pytest.mark.skipif("not HAS_COLORAMA")  # type: ignore
 def test_color_diff() -> None:
-    import autopep8_quotes._util._colorama as util_colorama
+    from autopep8_quotes._util import _colorama as util_colorama
     lines = []
     lines.append("-  Was string")
     lines.append("+  New string")
