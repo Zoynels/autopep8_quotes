@@ -32,11 +32,13 @@ def cleanup_imports():
 # Error when uncomment and commend skipif
 # @pytest.mark.usefixtures('no_module')
 @pytest.mark.skipif("HAS_COLORAMA")  # type: ignore
+@pytest.mark.skipif("not HAS_COLORAMA")  # type: ignore
 def test_module_missing() -> None:
     import autopep8_quotes._util._colorama as util_colorama
     assert isinstance(util_colorama.colorama, SimpleNamespace)
 
 
+@pytest.mark.skipif("HAS_COLORAMA")  # type: ignore
 @pytest.mark.skipif("not HAS_COLORAMA")  # type: ignore
 def test_module_missing_v2(monkeypatch) -> None:
     import autopep8_quotes._util._colorama
@@ -50,12 +52,14 @@ def test_module_missing_v2(monkeypatch) -> None:
     assert isinstance(autopep8_quotes._util._colorama.colorama, SimpleNamespace)
 
 
+@pytest.mark.skipif("HAS_COLORAMA")  # type: ignore
 @pytest.mark.skipif("not HAS_COLORAMA")  # type: ignore
 def test_module_available() -> None:
     import autopep8_quotes._util._colorama as util_colorama
     assert not isinstance(util_colorama.colorama, SimpleNamespace)
 
-
+@pytest.mark.skipif("HAS_COLORAMA")  # type: ignore
+@pytest.mark.skipif("not HAS_COLORAMA")  # type: ignore
 def test_color_diff() -> None:
     import autopep8_quotes._util._colorama as util_colorama
     lines = []
