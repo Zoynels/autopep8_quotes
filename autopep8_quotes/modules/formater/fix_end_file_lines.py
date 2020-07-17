@@ -9,7 +9,7 @@ from autopep8_quotes._util._modules import main_formatter
 
 
 class formatter(main_formatter):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.is_parse = True
 
