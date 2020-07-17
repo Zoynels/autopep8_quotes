@@ -75,6 +75,8 @@ class formatter(main_formatter):
         Second return value:
             if result > 0 then error else no error but may be warning
         """
+        if token.type != tokenize.STRING:
+            return token
 
         def parse(leaf: str, args: SimpleNamespace, token_dict: Dict[str, Any], change_quote: bool = False) -> Tuple[str, quotes_codes]:
             body_quoted = leaf.lstrip("furbFURB")

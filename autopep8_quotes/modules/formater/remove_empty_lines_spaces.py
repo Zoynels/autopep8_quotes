@@ -24,8 +24,11 @@ class formatter(main_formatter):
               **kwargs: Any
               ) -> tokenize.TokenInfo:
         if args.remove_empty_lines_spaces:
-            if (len(line_tokens) == 1) and (token.type == tokenize.NL) and (token.string == "\n"):
-                token = tokenize.TokenInfo(type=tokenize.NL, string=token.string, start=(token.start[0], 0), end=(token.end[0], 1), line=token.string)
+            if (len(line_tokens) != 1) or (token.type != tokenize.NL) :
+                return token
+            if ((token.string != "\n") and (token.string != "\r\n") and (token.string != "\r")):
+                return token
+            token = tokenize.TokenInfo(type=tokenize.NL, string=token.string, start=(token.start[0], 0), end=(token.end[0], 1), line=token.string)
         return token
 
     def check_is_enabled(self, args: SimpleNamespace, *_args: Any, **kwargs: Any) -> Any:

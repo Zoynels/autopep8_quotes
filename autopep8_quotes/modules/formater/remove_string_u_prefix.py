@@ -29,6 +29,8 @@ class formatter(main_formatter):
         Original from https://github.com/psf/black
         """
         if args.remove_string_u_prefix:
+            if token.type != tokenize.STRING:
+                return token
             leaf = token.string
             match = re.match(r"^([uU]*)(.*)$", leaf, re.DOTALL)
             assert match is not None, f"failed to match string {leaf!r}"
