@@ -36,6 +36,9 @@ def format_file(args: SimpleNamespace) -> Any:
             print("format_file: onfile_dict.name: ", onfile_dict.name)
 
         if not onfile_plugin.check_is_enabled(args):
+            if args._dev_debug_level >= 10:
+                print("format_file: onfile_dict.name: ", onfile_dict.name, "is not enabled")
+
             continue
         if args._read_file_need_load:
             # On first launch read file

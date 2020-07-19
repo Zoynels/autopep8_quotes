@@ -72,6 +72,7 @@ with open("README.md") as readme:
                   "in_place = autopep8_quotes.modules.saver.in_place:formatter",
                   "new_file = autopep8_quotes.modules.saver.new_file:formatter",
                   "git_smugle = autopep8_quotes.modules.saver.git_smugle:formatter",
+                  "git_smugle_diff = autopep8_quotes.modules.saver.git_smugle_diff:formatter",
               ],
           },
           packages=["autopep8_quotes"],

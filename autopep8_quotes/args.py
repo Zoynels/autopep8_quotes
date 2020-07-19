@@ -68,7 +68,11 @@ def agrs_parse(argv: List[Any], *_args: Any, **kwargs: Any) -> SimpleNamespace:
     # 5. Make changes into source file (rewrite it)
     # 6. Check files: is there any need of changes (Exit code 1)
     defaults["plugin_order_onfile_first"] = """[{"name": "check-soft"}, {"name": "diff-to-txt"}, {"name": "diff"}]"""
-    defaults["plugin_order_onfile_last"] = """[{"name": "new-file"}, {"name": "in-place"}, {"name": "check-hard"}, {"name": "git-smugle"}]"""
+    defaults["plugin_order_onfile_last"] = """[{"name": "new-file"}, """
+    defaults["plugin_order_onfile_last"] += """{"name": "in-place"}, """
+    defaults["plugin_order_onfile_last"] += """{"name": "check-hard"}, """
+    defaults["plugin_order_onfile_last"] += """{"name": "git-smugle"}, """
+    defaults["plugin_order_onfile_last"] += """{"name": "git-smugle-diff"}]"""
 
     # Apply on each token
     defaults["plugin_order_ontoken_first"] = "["
